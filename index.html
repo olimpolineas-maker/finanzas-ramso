@@ -167,7 +167,29 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
   <div class="modal">
     <h2>⚙️ Ajustes</h2>
     <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:16px">Gestioná los datos de la aplicación. Los datos se guardan solo en este dispositivo.</p>
+    <div class="section-title">Inversiones</div>
+    <div class="form-group">
+      <label class="form-label">API Key de Twelve Data</label>
+      <input class="form-input" id="set-api-key" placeholder="Gratis en twelvedata.com">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Stop-loss (%)</label>
+        <input class="form-input" id="set-stoploss" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Take-profit (%)</label>
+        <input class="form-input" id="set-takeprofit" type="number">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Límite de concentración por activo (%)</label>
+      <input class="form-input" id="set-concentration" type="number">
+    </div>
+    <button class="btn-save" style="width:100%;margin-bottom:16px" onclick="saveInvestSettings()">Guardar configuración de inversiones</button>
+    <div class="section-title">Datos</div>
     <button class="danger-btn" onclick="confirmClearDemo()">🗑️ Borrar datos de demostración</button>
+    <button class="danger-btn" onclick="confirmClearPortfolio()">📉 Borrar cartera de inversión</button>
     <button class="danger-btn" onclick="confirmClearAll()">⚠️ Borrar todos los datos</button>
     <div class="modal-actions" style="margin-top:8px">
       <button class="btn-cancel" onclick="closeModal('settings')">Cerrar</button>
@@ -195,7 +217,7 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
     <div class="header-actions">
       <div class="icon-btn" onclick="openModal('settings')" title="Ajustes">⚙️</div>
       <div class="icon-btn" title="Alertas">🔔</div>
-      <div class="icon-btn" onclick="openModal('add-tx')">＋</div>
+      <div class="icon-btn" onclick="headerAdd()">＋</div>
     </div>
   </div>
 
@@ -354,6 +376,37 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
     </div>
   </div>
 
+  <!-- INVERSIÓN -->
+  <div class="screen" id="screen-invest">
+    <div style="padding-top:4px">
+      <div class="balance-hero" style="background:linear-gradient(135deg,#0F6E56,#0B4A3A)">
+        <div class="label">Valor de cartera</div>
+        <div class="amount" id="inv-hero-total">$0</div>
+        <div class="sub">
+          <div class="sub-item">Invertido<span id="inv-hero-cost">$0</span></div>
+          <div class="sub-item">Resultado<span id="inv-hero-gain">$0</span></div>
+          <div class="sub-item">Rendimiento<span id="inv-hero-pct">0%</span></div>
+        </div>
+      </div>
+      <button class="btn-save" style="width:100%;margin-bottom:12px" onclick="fetchQuotes()">🔄 Actualizar precios (API)</button>
+      <div class="metrics-grid">
+        <div class="metric"><div class="m-label">Posiciones</div><div class="m-value" id="inv-metric-count">0</div></div>
+        <div class="metric"><div class="m-label">Mejor posición</div><div class="m-value" id="inv-metric-best" style="color:#3B6D11">—</div></div>
+        <div class="metric"><div class="m-label">Peor posición</div><div class="m-value" id="inv-metric-worst" style="color:#A32D2D">—</div></div>
+        <div class="metric"><div class="m-label">Concentración máx.</div><div class="m-value" id="inv-metric-conc">0%</div></div>
+      </div>
+      <div id="invest-alerts"></div>
+      <div class="card">
+        <div class="section-title">Distribución de la cartera</div>
+        <div style="position:relative;height:200px"><canvas id="investDonut"></canvas></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px" id="invest-donut-legend"></div>
+      </div>
+      <div class="section-title" style="margin:4px 0 10px 4px">Posiciones y recomendaciones</div>
+      <div id="invest-positions"></div>
+      <p style="font-size:11px;color:var(--color-text-secondary);text-align:center;padding:12px 8px 24px">Estas señales combinan stop-loss/take-profit, medias móviles, concentración de cartera y tu checklist fundamental. Son orientativas y no constituyen asesoramiento financiero.</p>
+    </div>
+  </div>
+
   <!-- NAV -->
   <nav class="nav">
     <div class="nav-item active" onclick="goTo('dashboard')">
@@ -375,6 +428,10 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
     <div class="nav-item" onclick="goTo('goals')">
       <div class="nav-icon">🎯</div>
       <div class="nav-label">Objetivos</div>
+    </div>
+    <div class="nav-item" onclick="goTo('invest')">
+      <div class="nav-icon">💹</div>
+      <div class="nav-label">Inversión</div>
     </div>
   </nav>
 </div>
@@ -421,6 +478,68 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('add-tx')">Cancelar</button>
       <button class="btn-save" onclick="saveTx()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA POSICIÓN -->
+<div class="modal-overlay" id="modal-add-position">
+  <div class="modal">
+    <h2>Nueva posición</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Ticker</label>
+        <input class="form-input" id="pos-ticker" placeholder="Ej: AAPL">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sector</label>
+        <input class="form-input" id="pos-sector" placeholder="Ej: Tecnología">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" id="pos-name" placeholder="Ej: Apple Inc.">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cantidad</label>
+        <input class="form-input" id="pos-qty" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precio de compra prom.</label>
+        <input class="form-input" id="pos-avgcost" type="number" placeholder="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Precio actual (opcional si vas a usar la API)</label>
+      <input class="form-input" id="pos-current" type="number" placeholder="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('add-position')">Cancelar</button>
+      <button class="btn-save" onclick="savePosition()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHECKLIST FUNDAMENTAL -->
+<div class="modal-overlay" id="modal-fundamentals">
+  <div class="modal">
+    <h2>Checklist fundamental</h2>
+    <div class="form-group">
+      <label class="form-label">Valuación (1 = cara, 5 = barata)</label>
+      <select class="form-input" id="fund-valuation"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Calidad del negocio (1 = débil, 5 = excelente)</label>
+      <select class="form-input" id="fund-quality"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Margen de seguridad (1 = bajo, 5 = alto)</label>
+      <select class="form-input" id="fund-margin"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('fundamentals')">Cancelar</button>
+      <button class="btn-save" onclick="saveFundamentals()">Guardar</button>
     </div>
   </div>
 </div>
@@ -478,8 +597,19 @@ const goals = [
   {name:'Auto',icon:'🚗',target:2500000,saved:34000,monthly:40000},
 ];
 
+let investments = [
+  {id:1,ticker:'AAPL',name:'Apple Inc.',sector:'Tecnología',qty:10,avgCost:150,currentPrice:172,sma20:null,sma50:null,lastUpdated:null,fundamentals:null},
+  {id:2,ticker:'YPFD.BA',name:'YPF S.A.',sector:'Energía',qty:50,avgCost:18000,currentPrice:15200,sma20:null,sma50:null,lastUpdated:null,fundamentals:null},
+  {id:3,ticker:'GGAL',name:'Grupo Financiero Galicia',sector:'Finanzas',qty:30,avgCost:12,currentPrice:15.8,sma20:null,sma50:null,lastUpdated:null,fundamentals:null},
+  {id:4,ticker:'MSFT',name:'Microsoft Corp.',sector:'Tecnología',qty:5,avgCost:410,currentPrice:402,sma20:null,sma50:null,lastUpdated:null,fundamentals:null},
+];
+const DEMO_INV_IDS = [1,2,3,4];
+let invSettings = {apiKey:'', stopLoss:15, takeProfit:25, concentration:25};
+let currentFundId = null;
+
 let txType = 'gasto';
 let activeFilter = 'all';
+let currentScreen = 'dashboard';
 let charts = {};
 
 function getSpentByCat(cat){
@@ -490,16 +620,29 @@ function goTo(screen){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('screen-'+screen).classList.add('active');
-  const nav = {dashboard:0,tx:1,budget:2,analysis:3,goals:4};
+  const nav = {dashboard:0,tx:1,budget:2,analysis:3,goals:4,invest:5};
   document.querySelectorAll('.nav-item')[nav[screen]].classList.add('active');
-  const titles = {dashboard:'Panel de control',tx:'Movimientos',budget:'Presupuesto',analysis:'Análisis',goals:'Objetivos'};
+  const titles = {dashboard:'Panel de control',tx:'Movimientos',budget:'Presupuesto',analysis:'Análisis',goals:'Objetivos',invest:'Inversiones'};
   document.getElementById('screen-title').textContent = titles[screen];
+  currentScreen = screen;
   if(screen==='analysis') setTimeout(initAnalysisCharts,100);
+  if(screen==='invest'){ renderInvest(); setTimeout(initInvestChart,100); }
+}
+
+function headerAdd(){
+  if(currentScreen==='invest') openModal('add-position');
+  else openModal('add-tx');
 }
 
 function openModal(id){
   document.getElementById('modal-'+id).classList.add('open');
   if(id==='add-tx') document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+  if(id==='settings'){
+    document.getElementById('set-api-key').value = invSettings.apiKey||'';
+    document.getElementById('set-stoploss').value = invSettings.stopLoss;
+    document.getElementById('set-takeprofit').value = invSettings.takeProfit;
+    document.getElementById('set-concentration').value = invSettings.concentration;
+  }
 }
 function closeModal(id){document.getElementById('modal-'+id).classList.remove('open')}
 
@@ -716,6 +859,271 @@ function renderAll(){
   setTimeout(initDonut,100);
 }
 
+/* ── INVERSIONES ── */
+function getMarketValue(p){ return (p.currentPrice||0)*p.qty; }
+function getCostBasis(p){ return (p.avgCost||0)*p.qty; }
+function getPctChange(p){ return (p.avgCost&&p.currentPrice!=null) ? ((p.currentPrice-p.avgCost)/p.avgCost*100) : null; }
+function getPortfolioTotal(){ return investments.reduce((s,p)=>s+getMarketValue(p),0); }
+function avg(arr){ return arr.reduce((s,v)=>s+v,0)/arr.length; }
+
+function computeSignals(p, totalValue){
+  const signals=[];
+  const pct = getPctChange(p);
+  if(pct!==null){
+    if(pct <= -invSettings.stopLoss){
+      signals.push({type:'sell',text:`Cayó ${pct.toFixed(1)}% desde tu precio de compra, superando tu stop-loss de -${invSettings.stopLoss}%.`});
+    } else if(pct >= invSettings.takeProfit){
+      signals.push({type:'trim',text:`Subió +${pct.toFixed(1)}% desde tu compra, superando tu objetivo de +${invSettings.takeProfit}%. Considerá tomar ganancias parciales.`});
+    } else {
+      signals.push({type:'hold',text:`${pct>=0?'+':''}${pct.toFixed(1)}% desde tu precio de compra (dentro del rango -${invSettings.stopLoss}% / +${invSettings.takeProfit}%).`});
+    }
+  } else {
+    signals.push({type:'warn',text:'Cargá tu precio de compra y actual para evaluar stop-loss / take-profit.'});
+  }
+
+  if(p.sma20!=null && p.sma50!=null && p.currentPrice!=null){
+    if(p.currentPrice>p.sma20 && p.sma20>p.sma50){
+      signals.push({type:'buy',text:'Tendencia alcista: precio por encima de SMA20 y SMA20 por encima de SMA50.'});
+    } else if(p.currentPrice<p.sma20 && p.sma20<p.sma50){
+      signals.push({type:'sell',text:'Tendencia bajista: precio por debajo de SMA20 y SMA20 por debajo de SMA50.'});
+    } else {
+      signals.push({type:'hold',text:'Tendencia mixta: sin señal clara de medias móviles.'});
+    }
+  } else {
+    signals.push({type:'warn',text:'Sin datos de medias móviles. Usá "Actualizar tendencia" para calcularlas.'});
+  }
+
+  const weight = totalValue>0 ? getMarketValue(p)/totalValue*100 : 0;
+  if(weight >= invSettings.concentration){
+    signals.push({type:'trim',text:`Representa el ${weight.toFixed(1)}% de tu cartera, por encima del límite de concentración (${invSettings.concentration}%). Considerá diversificar.`});
+  } else {
+    signals.push({type:'hold',text:`Pesa ${weight.toFixed(1)}% de tu cartera total.`});
+  }
+
+  if(p.fundamentals){
+    const f = p.fundamentals;
+    const fAvg = (f.valuation+f.quality+f.margin)/3;
+    if(fAvg>=4) signals.push({type:'buy',text:`Buenos fundamentos (${fAvg.toFixed(1)}/5): valuación, calidad de negocio y margen de seguridad favorables.`});
+    else if(fAvg<=2.3) signals.push({type:'sell',text:`Fundamentos débiles (${fAvg.toFixed(1)}/5).`});
+    else signals.push({type:'hold',text:`Fundamentos mixtos (${fAvg.toFixed(1)}/5).`});
+  } else {
+    signals.push({type:'warn',text:'Completá el checklist fundamental para afinar la recomendación.'});
+  }
+
+  return {signals, weight, pct};
+}
+
+function computeRecommendation(p, totalValue){
+  const {signals, weight, pct} = computeSignals(p, totalValue);
+  const stopLossHit = pct!==null && pct<=-invSettings.stopLoss;
+  const takeProfitHit = pct!==null && pct>=invSettings.takeProfit;
+  const concentrationHit = weight>=invSettings.concentration;
+  const trendSignal = signals.find(s=>s.text.startsWith('Tendencia'));
+  const fundSignal = signals.find(s=>/fundamentos/i.test(s.text));
+  let secondary=0;
+  if(trendSignal){ if(trendSignal.type==='buy') secondary++; if(trendSignal.type==='sell') secondary--; }
+  if(fundSignal){ if(fundSignal.type==='buy') secondary++; if(fundSignal.type==='sell') secondary--; }
+
+  let label,badge;
+  if(stopLossHit){ label='VENDER'; badge='badge-red'; }
+  else if(concentrationHit){ label='REDUCIR'; badge='badge-amber'; }
+  else if(takeProfitHit){ label='VENDER PARCIAL'; badge='badge-amber'; }
+  else if(secondary>=1){ label='COMPRAR'; badge='badge-green'; }
+  else if(secondary<=-1){ label='VIGILAR'; badge='badge-amber'; }
+  else { label='MANTENER'; badge='badge-blue'; }
+
+  return {label, badge, signals};
+}
+
+function renderInvest(){
+  const total = getPortfolioTotal();
+  const costBasis = investments.reduce((s,p)=>s+getCostBasis(p),0);
+  const gain = total-costBasis;
+  const gainPct = costBasis ? (gain/costBasis*100) : 0;
+
+  document.getElementById('inv-hero-total').textContent = fmt(total);
+  document.getElementById('inv-hero-cost').textContent = fmt(costBasis);
+  document.getElementById('inv-hero-gain').textContent = (gain>=0?'+':'-')+fmt(gain);
+  document.getElementById('inv-hero-pct').textContent = (gainPct>=0?'+':'')+gainPct.toFixed(1)+'%';
+
+  document.getElementById('inv-metric-count').textContent = investments.length;
+  let best=null, worst=null, maxWeight=0;
+  const alerts=[];
+  const posHtml = investments.map(p=>{
+    const rec = computeRecommendation(p, total);
+    const pct = getPctChange(p);
+    const weight = total>0 ? getMarketValue(p)/total*100 : 0;
+    if(weight>maxWeight) maxWeight=weight;
+    if(pct!==null){
+      if(best===null||pct>best.pct) best={ticker:p.ticker,pct};
+      if(worst===null||pct<worst.pct) worst={ticker:p.ticker,pct};
+    }
+    rec.signals.filter(s=>s.type==='sell'||s.type==='trim').forEach(s=>alerts.push({ticker:p.ticker,...s}));
+    const icon = {sell:'🔴',trim:'🟠',buy:'🟢',warn:'⚪',hold:'🔵'};
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:14px;font-weight:500">${p.ticker} <span style="font-weight:400;color:var(--color-text-secondary);font-size:12px">${p.name?'· '+p.name:''}</span></div>
+          <div style="font-size:12px;color:var(--color-text-secondary)">${p.qty} u. · Compra prom. ${fmt(p.avgCost)} · Actual ${p.currentPrice!=null?fmt(p.currentPrice):'—'}</div>
+        </div>
+        <span class="badge ${rec.badge}">${rec.label}</span>
+      </div>
+      ${pct!==null?`<div style="font-size:13px;font-weight:500;color:${pct>=0?'#3B6D11':'#A32D2D'};margin-bottom:8px">${pct>=0?'+':''}${pct.toFixed(1)}% · ${(getMarketValue(p)-getCostBasis(p))>=0?'+':''}${fmt(getMarketValue(p)-getCostBasis(p))}</div>`:''}
+      <div>${rec.signals.map(s=>`<div style="font-size:12px;color:var(--color-text-secondary);padding:3px 0;display:flex;gap:6px"><span>${icon[s.type]||'⚪'}</span><span>${s.text}</span></div>`).join('')}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="refreshTrend(${p.id})">📈 Tendencia</button>
+        <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="openFundamentals(${p.id})">📋 Fundamentos</button>
+        <button class="del-tx-btn" onclick="deletePosition(${p.id})" title="Eliminar">🗑</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="card" style="text-align:center;padding:24px;color:var(--color-text-secondary);font-size:14px">Todavía no cargaste posiciones. Agregá una con el botón ＋.</div>';
+
+  document.getElementById('invest-positions').innerHTML = posHtml;
+  document.getElementById('inv-metric-best').textContent = best ? `${best.ticker} ${best.pct>=0?'+':''}${best.pct.toFixed(1)}%` : '—';
+  document.getElementById('inv-metric-worst').textContent = worst ? `${worst.ticker} ${worst.pct>=0?'+':''}${worst.pct.toFixed(1)}%` : '—';
+  document.getElementById('inv-metric-conc').textContent = maxWeight.toFixed(0)+'%';
+  document.getElementById('invest-alerts').innerHTML = alerts.length
+    ? alerts.slice(0,5).map(a=>`<div class="alert-box ${a.type==='sell'?'alert-danger':'alert-warn'}">${a.type==='sell'?'⚠️':'●'} <strong>${a.ticker}</strong>: ${a.text}</div>`).join('')
+    : '<div class="alert-box alert-ok">✅ Sin alertas activas en tu cartera.</div>';
+}
+
+function initInvestChart(){
+  if(charts.investDonut) charts.investDonut.destroy();
+  const palette=['#185FA5','#0F6E56','#993C1D','#854F0B','#3B6D11','#534AB7','#993356','#5F5E5A','#BA7517','#0C447C'];
+  const tickers = investments.map(p=>p.ticker);
+  const data = investments.map(p=>getMarketValue(p));
+  const colors = tickers.map((_,i)=>palette[i%palette.length]);
+  charts.investDonut = new Chart(document.getElementById('investDonut'),{
+    type:'doughnut',
+    data:{labels:tickers,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}}}
+  });
+  document.getElementById('invest-donut-legend').innerHTML = tickers.map((t,i)=>`<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-text-secondary)"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i]};flex-shrink:0"></span>${t}</span>`).join('');
+}
+
+function savePosition(){
+  const ticker = document.getElementById('pos-ticker').value.trim().toUpperCase();
+  const name = document.getElementById('pos-name').value.trim();
+  const sector = document.getElementById('pos-sector').value.trim()||'Otros';
+  const qty = parseFloat(document.getElementById('pos-qty').value);
+  const avgCost = parseFloat(document.getElementById('pos-avgcost').value);
+  const currentRaw = document.getElementById('pos-current').value;
+  if(!ticker||!qty||!avgCost) return;
+  investments.push({id:Date.now(),ticker,name,sector,qty,avgCost,currentPrice:currentRaw?parseFloat(currentRaw):avgCost,sma20:null,sma50:null,lastUpdated:null,fundamentals:null});
+  closeModal('add-position');
+  ['pos-ticker','pos-name','pos-sector','pos-qty','pos-avgcost','pos-current'].forEach(id=>document.getElementById(id).value='');
+  saveInvestState();
+  renderInvest();
+  setTimeout(initInvestChart,100);
+}
+
+function deletePosition(id){
+  investments = investments.filter(p=>p.id!==id);
+  saveInvestState();
+  renderInvest();
+  setTimeout(initInvestChart,100);
+}
+
+function openFundamentals(id){
+  currentFundId = id;
+  const p = investments.find(x=>x.id===id);
+  if(!p) return;
+  const f = p.fundamentals||{valuation:3,quality:3,margin:3};
+  document.getElementById('fund-valuation').value = f.valuation;
+  document.getElementById('fund-quality').value = f.quality;
+  document.getElementById('fund-margin').value = f.margin;
+  openModal('fundamentals');
+}
+
+function saveFundamentals(){
+  const p = investments.find(x=>x.id===currentFundId);
+  if(!p) return;
+  p.fundamentals = {
+    valuation: parseInt(document.getElementById('fund-valuation').value),
+    quality: parseInt(document.getElementById('fund-quality').value),
+    margin: parseInt(document.getElementById('fund-margin').value)
+  };
+  saveInvestState();
+  closeModal('fundamentals');
+  renderInvest();
+}
+
+async function fetchQuotes(){
+  if(!invSettings.apiKey){ alert('Configurá tu API key de Twelve Data en Ajustes ⚙️ para actualizar precios en vivo.'); return; }
+  const symbols = [...new Set(investments.map(p=>p.ticker))];
+  if(!symbols.length) return;
+  try{
+    const res = await fetch(`https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols.join(','))}&apikey=${encodeURIComponent(invSettings.apiKey)}`);
+    const data = await res.json();
+    const map = symbols.length>1 ? data : {[symbols[0]]:data};
+    investments.forEach(p=>{
+      const q = map[p.ticker];
+      if(q && q.close && !q.status){ p.currentPrice = parseFloat(q.close); p.lastUpdated = new Date().toISOString(); }
+    });
+    saveInvestState();
+    renderInvest();
+    setTimeout(initInvestChart,100);
+  }catch(e){
+    alert('No se pudo actualizar los precios. Verificá tu API key o tu conexión.');
+  }
+}
+
+async function refreshTrend(id){
+  const p = investments.find(x=>x.id===id);
+  if(!p) return;
+  if(!invSettings.apiKey){ alert('Configurá tu API key de Twelve Data en Ajustes ⚙️ para calcular la tendencia.'); return; }
+  try{
+    const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(p.ticker)}&interval=1day&outputsize=55&apikey=${encodeURIComponent(invSettings.apiKey)}`);
+    const data = await res.json();
+    if(!data.values) throw new Error('sin datos');
+    const closes = data.values.map(v=>parseFloat(v.close)).reverse();
+    p.sma20 = closes.length>=20 ? avg(closes.slice(-20)) : null;
+    p.sma50 = closes.length>=50 ? avg(closes.slice(-50)) : null;
+    saveInvestState();
+    renderInvest();
+  }catch(e){
+    alert('No se pudo calcular la tendencia para '+p.ticker+'. Verificá el ticker o tu API key.');
+  }
+}
+
+function saveInvestSettings(){
+  invSettings.apiKey = document.getElementById('set-api-key').value.trim();
+  invSettings.stopLoss = parseFloat(document.getElementById('set-stoploss').value)||15;
+  invSettings.takeProfit = parseFloat(document.getElementById('set-takeprofit').value)||25;
+  invSettings.concentration = parseFloat(document.getElementById('set-concentration').value)||25;
+  saveInvestState();
+  renderInvest();
+  closeModal('settings');
+}
+
+function confirmClearPortfolio(){
+  closeModal('settings');
+  document.getElementById('confirm-title').textContent='Borrar cartera de inversión';
+  document.getElementById('confirm-text').textContent='Se eliminarán todas tus posiciones cargadas. Esta acción no se puede deshacer.';
+  document.getElementById('confirm-ok-btn').onclick = () => {
+    investments = [];
+    saveInvestState();
+    renderInvest();
+    setTimeout(initInvestChart,100);
+    closeModal('confirm');
+  };
+  openModal('confirm');
+}
+
+function saveInvestState(){
+  localStorage.setItem('inv_state', JSON.stringify({investments, settings:invSettings}));
+}
+function loadInvestState(){
+  try{
+    const raw = localStorage.getItem('inv_state');
+    if(raw){
+      const d = JSON.parse(raw);
+      investments = d.investments||[];
+      invSettings = Object.assign(invSettings, d.settings||{});
+    }
+  }catch(e){}
+}
+
 /* ── PIN ── */
 const CORRECT_PIN = '9071';
 let pinBuffer = '';
@@ -765,12 +1173,20 @@ function confirmClearAll(){
 }
 function clearDemo(){
   transactions = transactions.filter(t=>t.id>20);
+  investments = investments.filter(p=>!DEMO_INV_IDS.includes(p.id));
+  saveInvestState();
   renderAll();
+  renderInvest();
 }
 function clearAll(){
   transactions = [];
+  investments = [];
+  saveInvestState();
   renderAll();
+  renderInvest();
 }
+
+loadInvestState();
 </script>
 </body>
 </html>
