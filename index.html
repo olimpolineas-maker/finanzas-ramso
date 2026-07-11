@@ -637,10 +637,10 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
   </div>
 </div>
 
-<!-- MODAL NUEVA POSICIÓN -->
+<!-- MODAL NUEVA/EDITAR POSICIÓN -->
 <div class="modal-overlay" id="modal-add-position">
   <div class="modal">
-    <h2>Nueva posición</h2>
+    <h2 id="pos-modal-title">Nueva posición</h2>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Ticker</label>
@@ -655,23 +655,41 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
       <label class="form-label">Nombre</label>
       <input class="form-input" id="pos-name" placeholder="Ej: Apple Inc.">
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Cantidad</label>
-        <input class="form-input" id="pos-qty" type="number" placeholder="0">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Precio de compra prom.</label>
-        <input class="form-input" id="pos-avgcost" type="number" placeholder="0">
-      </div>
-    </div>
     <div class="form-group">
-      <label class="form-label">Precio actual (opcional si vas a usar la API)</label>
-      <input class="form-input" id="pos-current" type="number" placeholder="0">
+      <label class="form-label">Cantidad (acepta fracciones, ej: 0.2626)</label>
+      <input class="form-input" id="pos-qty" type="number" step="any" placeholder="0" oninput="updatePosPreview()">
     </div>
+
+    <div class="form-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <label class="form-label" style="margin-bottom:0">Precio de compra</label>
+        <div style="display:flex;gap:4px">
+          <span class="chip active" id="pos-avgcost-mode-unit" style="padding:2px 8px;font-size:11px" onclick="setPosMode('avgcost','unit')">Por unidad</span>
+          <span class="chip" id="pos-avgcost-mode-total" style="padding:2px 8px;font-size:11px" onclick="setPosMode('avgcost','total')">Monto total pagado</span>
+        </div>
+      </div>
+      <input class="form-input" id="pos-avgcost" type="number" step="any" placeholder="0" oninput="updatePosPreview()">
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px" id="pos-avgcost-hint"></div>
+    </div>
+
+    <div class="form-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <label class="form-label" style="margin-bottom:0">Precio actual (opcional si vas a usar la API)</label>
+        <div style="display:flex;gap:4px">
+          <span class="chip active" id="pos-current-mode-unit" style="padding:2px 8px;font-size:11px" onclick="setPosMode('current','unit')">Por unidad</span>
+          <span class="chip" id="pos-current-mode-total" style="padding:2px 8px;font-size:11px" onclick="setPosMode('current','total')">Valor total actual</span>
+        </div>
+      </div>
+      <input class="form-input" id="pos-current" type="number" step="any" placeholder="0" oninput="updatePosPreview()">
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px" id="pos-current-hint"></div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('add-position')">Cancelar</button>
       <button class="btn-save" onclick="savePosition()">Guardar</button>
+    </div>
+    <div class="modal-actions" id="pos-delete-row" style="display:none">
+      <button class="btn-danger-outline" onclick="deletePositionFromModal()">Eliminar posición</button>
     </div>
   </div>
 </div>
@@ -1493,7 +1511,7 @@ function renderInvest(){
     rec.signals.filter(s=>s.type==='sell'||s.type==='trim').forEach(s=>alerts.push({ticker:p.ticker,...s}));
     const icon = {sell:'🔴',trim:'🟠',buy:'🟢',warn:'⚪',hold:'🔵'};
     const posGain = getMarketValue(p)-getCostBasis(p);
-    return `<div class="card" style="margin-bottom:10px">
+    return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="openEditPosition(${p.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-size:14px;font-weight:500">${escapeHtml(p.ticker)} <span style="font-weight:400;color:var(--color-text-secondary);font-size:12px">${p.name?'· '+escapeHtml(p.name):''}</span></div>
@@ -1504,9 +1522,9 @@ function renderInvest(){
       ${pct!==null?`<div style="font-size:13px;font-weight:500;color:${pct>=0?'#3B6D11':'#A32D2D'};margin-bottom:8px">${pct>=0?'+':''}${pct.toFixed(1)}% · ${posGain>=0?'+':''}${fmt(posGain)}</div>`:''}
       <div>${rec.signals.map(s=>`<div style="font-size:12px;color:var(--color-text-secondary);padding:3px 0;display:flex;gap:6px"><span>${icon[s.type]||'⚪'}</span><span>${s.text}</span></div>`).join('')}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="refreshTrend(${p.id})">📈 Tendencia</button>
-        <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="openFundamentals(${p.id})">📋 Fundamentos</button>
-        <button class="del-tx-btn" onclick="deletePosition(${p.id})" title="Eliminar">🗑</button>
+        <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="refreshTrend(${p.id},event)">📈 Tendencia</button>
+        <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="openFundamentals(${p.id},event)">📋 Fundamentos</button>
+        <button class="del-tx-btn" onclick="deletePosition(${p.id},event)" title="Eliminar">🗑</button>
       </div>
     </div>`;
   }).join('') || '<div class="empty-state">Todavía no cargaste posiciones. Agregá una con el botón ＋.</div>';
@@ -1534,8 +1552,63 @@ function initInvestChart(){
   document.getElementById('invest-donut-legend').innerHTML = tickers.map((t,i)=>`<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-text-secondary)"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i]};flex-shrink:0"></span>${escapeHtml(t)}</span>`).join('');
 }
 
-function openAddPosition(){
+let editingPosId = null;
+let posMode = {avgcost:'unit', current:'unit'};
+
+function setPosMode(field, mode){
+  posMode[field] = mode;
+  document.getElementById(`pos-${field}-mode-unit`).classList.toggle('active', mode==='unit');
+  document.getElementById(`pos-${field}-mode-total`).classList.toggle('active', mode==='total');
+  const input = document.getElementById(field==='avgcost'?'pos-avgcost':'pos-current');
+  input.placeholder = mode==='total' ? 'Monto total pagado' : 'Precio por unidad';
+  updatePosPreview();
+}
+
+function updatePosPreview(){
+  const qty = parseFloat(document.getElementById('pos-qty').value);
+  ['avgcost','current'].forEach(field=>{
+    const inputId = field==='avgcost' ? 'pos-avgcost' : 'pos-current';
+    const hintEl = document.getElementById(`pos-${field}-hint`);
+    const raw = parseFloat(document.getElementById(inputId).value);
+    if(!raw || raw<=0){ hintEl.textContent=''; return; }
+    if(!qty || qty<=0){ hintEl.textContent='Ingresá la cantidad para calcular el precio por unidad.'; return; }
+    if(posMode[field]==='total'){
+      hintEl.textContent = `≈ ${fmt(raw/qty)} por unidad (${fmt(raw)} ÷ ${qty})`;
+    } else {
+      hintEl.textContent = `≈ ${fmt(raw*qty)} en total (${fmt(raw)} × ${qty})`;
+    }
+  });
+}
+
+function resetPosForm(){
   ['pos-ticker','pos-name','pos-sector','pos-qty','pos-avgcost','pos-current'].forEach(id=>document.getElementById(id).value='');
+  ['pos-avgcost-hint','pos-current-hint'].forEach(id=>document.getElementById(id).textContent='');
+  setPosMode('avgcost','unit');
+  setPosMode('current','unit');
+}
+
+function openAddPosition(){
+  editingPosId = null;
+  document.getElementById('pos-modal-title').textContent = 'Nueva posición';
+  document.getElementById('pos-delete-row').style.display = 'none';
+  resetPosForm();
+  openModal('add-position');
+}
+
+function openEditPosition(id){
+  const p = state.investments.find(x=>x.id===id);
+  if(!p) return;
+  editingPosId = id;
+  document.getElementById('pos-modal-title').textContent = 'Editar posición';
+  document.getElementById('pos-delete-row').style.display = 'flex';
+  resetPosForm();
+  document.getElementById('pos-ticker').value = p.ticker;
+  document.getElementById('pos-name').value = p.name||'';
+  document.getElementById('pos-sector').value = p.sector||'';
+  document.getElementById('pos-qty').value = p.qty;
+  document.getElementById('pos-avgcost').value = p.avgCost;
+  document.getElementById('pos-current').value = p.currentPrice!=null ? p.currentPrice : '';
+  updatePosPreview();
   openModal('add-position');
 }
 
@@ -1544,25 +1617,52 @@ function savePosition(){
   const name = document.getElementById('pos-name').value.trim();
   const sector = document.getElementById('pos-sector').value.trim()||'Otros';
   const qty = parseFloat(document.getElementById('pos-qty').value);
-  const avgCost = parseFloat(document.getElementById('pos-avgcost').value);
+  const avgCostRaw = parseFloat(document.getElementById('pos-avgcost').value);
   const currentRaw = document.getElementById('pos-current').value;
-  if(!ticker||!qty||!avgCost) return;
-  state.investments.push({id:state.nextInvestId++,ticker,name,sector,qty,avgCost,currentPrice:currentRaw?parseFloat(currentRaw):avgCost,sma20:null,sma50:null,lastUpdated:null,fundamentals:null});
+  if(!ticker||!qty||!avgCostRaw) return;
+  const avgCost = posMode.avgcost==='total' ? avgCostRaw/qty : avgCostRaw;
+  let currentPrice = avgCost;
+  if(currentRaw){
+    const currentNum = parseFloat(currentRaw);
+    currentPrice = posMode.current==='total' ? currentNum/qty : currentNum;
+  }
+  if(editingPosId!=null){
+    const p = state.investments.find(x=>x.id===editingPosId);
+    Object.assign(p,{ticker,name,sector,qty,avgCost,currentPrice});
+  } else {
+    state.investments.push({id:state.nextInvestId++,ticker,name,sector,qty,avgCost,currentPrice,sma20:null,sma50:null,lastUpdated:null,fundamentals:null});
+  }
   saveState();
   closeModal('add-position');
   renderInvest();
   setTimeout(initInvestChart,50);
 }
 
-function deletePosition(id){
-  state.investments = state.investments.filter(p=>p.id!==id);
-  saveState();
-  renderInvest();
-  setTimeout(initInvestChart,50);
+function deletePosition(id,ev){
+  if(ev) ev.stopPropagation();
+  openConfirm('Eliminar posición','Esta acción no se puede deshacer.',()=>{
+    state.investments = state.investments.filter(p=>p.id!==id);
+    saveState();
+    renderInvest();
+    setTimeout(initInvestChart,50);
+  });
+}
+
+function deletePositionFromModal(){
+  if(editingPosId==null) return;
+  const id = editingPosId;
+  closeModal('add-position');
+  openConfirm('Eliminar posición','Esta acción no se puede deshacer.',()=>{
+    state.investments = state.investments.filter(p=>p.id!==id);
+    saveState();
+    renderInvest();
+    setTimeout(initInvestChart,50);
+  });
 }
 
 let currentFundId = null;
-function openFundamentals(id){
+function openFundamentals(id,ev){
+  if(ev) ev.stopPropagation();
   currentFundId = id;
   const p = state.investments.find(x=>x.id===id);
   if(!p) return;
@@ -1607,7 +1707,8 @@ async function fetchQuotes(){
   }
 }
 
-async function refreshTrend(id){
+async function refreshTrend(id,ev){
+  if(ev) ev.stopPropagation();
   const p = state.investments.find(x=>x.id===id);
   if(!p) return;
   const settings = state.investSettings;
