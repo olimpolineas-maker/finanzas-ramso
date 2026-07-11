@@ -2,8 +2,17 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Finanzas Personales</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#185FA5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanzas">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -116,6 +125,34 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
 .empty-state{text-align:center;padding:24px;color:var(--color-text-secondary);font-size:14px}
 @media(max-width:440px){.nav{width:100%}}
 
+/* DESKTOP / TABLET */
+@media(min-width:768px){
+  body{
+    display:flex;justify-content:center;padding:24px 16px;box-sizing:border-box;min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 10%,rgba(24,95,165,0.10),transparent 45%),
+      radial-gradient(circle at 85% 0%,rgba(15,110,86,0.10),transparent 40%),
+      var(--color-background-tertiary);
+  }
+  .app{
+    max-width:960px;width:100%;min-height:calc(100vh - 48px);padding-bottom:24px;
+    border-radius:var(--border-radius-lg);
+    box-shadow:0 1px 3px rgba(0,0,0,0.08),0 0 0 1px var(--color-border-tertiary);
+    display:flex;flex-direction:column;
+  }
+  .header{order:-2;padding:20px 32px;border-radius:var(--border-radius-lg) var(--border-radius-lg) 0 0}
+  .nav{
+    order:-1;position:static;left:auto;bottom:auto;transform:none;width:100%;max-width:none;
+    border-top:none;border-bottom:0.5px solid var(--color-border-tertiary);
+    justify-content:center;gap:8px;padding:10px 0;
+  }
+  .nav-item{flex:0 1 140px}
+  .screen{padding:24px 32px 32px}
+  .metrics-grid{grid-template-columns:repeat(4,1fr)}
+  .modal-overlay{align-items:center}
+  .modal{border-radius:16px;max-width:480px;max-height:85vh}
+}
+
 /* PIN LOCK */
 .pin-screen{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-background-tertiary);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
 .pin-screen.hidden{display:none}
@@ -194,9 +231,32 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
       </div>
     </div>
     <div class="settings-group">
+      <div class="settings-group-title">Inversiones</div>
+      <div class="form-group">
+        <label class="form-label">API Key de Twelve Data</label>
+        <input class="form-input" id="set-api-key" placeholder="Gratis en twelvedata.com">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Stop-loss (%)</label>
+          <input class="form-input" id="set-stoploss" type="number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Take-profit (%)</label>
+          <input class="form-input" id="set-takeprofit" type="number">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Límite de concentración por activo (%)</label>
+        <input class="form-input" id="set-concentration" type="number">
+      </div>
+      <button class="btn-save" style="width:100%" onclick="saveInvestSettings()">Guardar configuración de inversiones</button>
+    </div>
+    <div class="settings-group">
       <div class="settings-group-title">Datos</div>
       <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px">Los datos se guardan solo en este dispositivo (localStorage del navegador).</p>
       <button class="danger-btn" onclick="confirmClearDemo()">🗑️ Borrar datos de demostración</button>
+      <button class="danger-btn" onclick="confirmClearPortfolio()">📉 Borrar cartera de inversión</button>
       <button class="danger-btn" onclick="confirmClearAll()">⚠️ Borrar todos los datos</button>
     </div>
     <div class="modal-actions" style="margin-top:8px">
@@ -244,7 +304,7 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
       <h1 id="screen-title">Panel de control</h1>
     </div>
     <div class="header-actions">
-      <div class="icon-btn" onclick="openModal('settings')" title="Ajustes">⚙️</div>
+      <div class="icon-btn" onclick="openSettings()" title="Ajustes">⚙️</div>
       <div class="icon-btn" onclick="openAddTx()" title="Agregar transacción">＋</div>
     </div>
   </div>
@@ -403,6 +463,42 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
     </div>
   </div>
 
+  <!-- INVERSIÓN -->
+  <div class="screen" id="screen-invest">
+    <div style="padding-top:4px">
+      <div class="balance-hero" style="background:linear-gradient(135deg,#0F6E56,#0B4A3A)">
+        <div class="label">Valor de cartera</div>
+        <div class="amount" id="inv-hero-total">$0</div>
+        <div class="sub">
+          <div class="sub-item">Invertido<span id="inv-hero-cost">$0</span></div>
+          <div class="sub-item">Resultado<span id="inv-hero-gain">$0</span></div>
+          <div class="sub-item">Rendimiento<span id="inv-hero-pct">0%</span></div>
+        </div>
+      </div>
+      <button class="btn-save" style="width:100%;margin-bottom:12px" onclick="fetchQuotes()">🔄 Actualizar precios (API)</button>
+      <div class="metrics-grid">
+        <div class="metric"><div class="m-label">Posiciones</div><div class="m-value" id="inv-metric-count">0</div></div>
+        <div class="metric"><div class="m-label">Mejor posición</div><div class="m-value" id="inv-metric-best" style="color:#3B6D11">—</div></div>
+        <div class="metric"><div class="m-label">Peor posición</div><div class="m-value" id="inv-metric-worst" style="color:#A32D2D">—</div></div>
+        <div class="metric"><div class="m-label">Concentración máx.</div><div class="m-value" id="inv-metric-conc">0%</div></div>
+      </div>
+      <div id="invest-alerts"></div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:10px">Distribución de la cartera</div>
+        <div style="position:relative;height:200px"><canvas id="investDonut"></canvas></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px" id="invest-donut-legend"></div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title" style="margin:0">Posiciones y recomendaciones</div>
+          <div class="icon-btn-sm" onclick="openAddPosition()" title="Agregar posición">＋</div>
+        </div>
+        <div id="invest-positions"></div>
+      </div>
+      <p style="font-size:11px;color:var(--color-text-secondary);text-align:center;padding:12px 8px 24px">Estas señales combinan stop-loss/take-profit, medias móviles, concentración de cartera y tu checklist fundamental. Son orientativas y no constituyen asesoramiento financiero.</p>
+    </div>
+  </div>
+
   <!-- NAV -->
   <nav class="nav">
     <div class="nav-item active" onclick="goTo('dashboard')">
@@ -424,6 +520,10 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
     <div class="nav-item" onclick="goTo('goals')">
       <div class="nav-icon">🎯</div>
       <div class="nav-label">Objetivos</div>
+    </div>
+    <div class="nav-item" onclick="goTo('invest')">
+      <div class="nav-icon">💹</div>
+      <div class="nav-label">Inversión</div>
     </div>
   </nav>
 </div>
@@ -533,6 +633,68 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('goal-funds')">Cancelar</button>
       <button class="btn-save" onclick="saveGoalFunds()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA POSICIÓN -->
+<div class="modal-overlay" id="modal-add-position">
+  <div class="modal">
+    <h2>Nueva posición</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Ticker</label>
+        <input class="form-input" id="pos-ticker" placeholder="Ej: AAPL">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sector</label>
+        <input class="form-input" id="pos-sector" placeholder="Ej: Tecnología">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" id="pos-name" placeholder="Ej: Apple Inc.">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cantidad</label>
+        <input class="form-input" id="pos-qty" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precio de compra prom.</label>
+        <input class="form-input" id="pos-avgcost" type="number" placeholder="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Precio actual (opcional si vas a usar la API)</label>
+      <input class="form-input" id="pos-current" type="number" placeholder="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('add-position')">Cancelar</button>
+      <button class="btn-save" onclick="savePosition()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHECKLIST FUNDAMENTAL -->
+<div class="modal-overlay" id="modal-fundamentals">
+  <div class="modal">
+    <h2>Checklist fundamental</h2>
+    <div class="form-group">
+      <label class="form-label">Valuación (1 = cara, 5 = barata)</label>
+      <select class="form-input" id="fund-valuation"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Calidad del negocio (1 = débil, 5 = excelente)</label>
+      <select class="form-input" id="fund-quality"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Margen de seguridad (1 = bajo, 5 = alto)</label>
+      <select class="form-input" id="fund-margin"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('fundamentals')">Cancelar</button>
+      <button class="btn-save" onclick="saveFundamentals()">Guardar</button>
     </div>
   </div>
 </div>
@@ -664,9 +826,17 @@ function createDemoState(){
       {id:4,name:'Auto',icon:'🚗',target:2500000,saved:34000,monthly:40000},
     ],
     settings: {pinEnabled:false, pin:null},
+    investments: [
+      {id:1,ticker:'AAPL',name:'Apple Inc.',sector:'Tecnología',qty:10,avgCost:150,currentPrice:172,sma20:null,sma50:null,lastUpdated:null,fundamentals:null,demo:true},
+      {id:2,ticker:'YPFD.BA',name:'YPF S.A.',sector:'Energía',qty:50,avgCost:18000,currentPrice:15200,sma20:null,sma50:null,lastUpdated:null,fundamentals:null,demo:true},
+      {id:3,ticker:'GGAL',name:'Grupo Financiero Galicia',sector:'Finanzas',qty:30,avgCost:12,currentPrice:15.8,sma20:null,sma50:null,lastUpdated:null,fundamentals:null,demo:true},
+      {id:4,ticker:'MSFT',name:'Microsoft Corp.',sector:'Tecnología',qty:5,avgCost:410,currentPrice:402,sma20:null,sma50:null,lastUpdated:null,fundamentals:null,demo:true},
+    ],
+    investSettings: {apiKey:'', stopLoss:15, takeProfit:25, concentration:25},
     nextTxId: id,
     nextBudgetId: 8,
     nextGoalId: 5,
+    nextInvestId: 5,
   };
 }
 
@@ -683,6 +853,9 @@ function saveState(){
 function initState(){
   state = loadState() || createDemoState();
   if(!state.settings) state.settings = {pinEnabled:false,pin:null};
+  if(!state.investments) state.investments = [];
+  if(!state.investSettings) state.investSettings = {apiKey:'',stopLoss:15,takeProfit:25,concentration:25};
+  if(!state.nextInvestId) state.nextInvestId = (Math.max(0,...state.investments.map(p=>p.id))||0)+1;
   saveState();
 }
 
@@ -691,11 +864,12 @@ function goTo(screen){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('screen-'+screen).classList.add('active');
-  const nav = {dashboard:0,tx:1,budget:2,analysis:3,goals:4};
+  const nav = {dashboard:0,tx:1,budget:2,analysis:3,goals:4,invest:5};
   document.querySelectorAll('.nav-item')[nav[screen]].classList.add('active');
-  const titles = {dashboard:'Panel de control',tx:'Movimientos',budget:'Presupuesto',analysis:'Análisis',goals:'Objetivos'};
+  const titles = {dashboard:'Panel de control',tx:'Movimientos',budget:'Presupuesto',analysis:'Análisis',goals:'Objetivos',invest:'Inversiones'};
   document.getElementById('screen-title').textContent = titles[screen];
   if(screen==='analysis') setTimeout(initAnalysisCharts,50);
+  if(screen==='invest'){ renderInvest(); setTimeout(initInvestChart,50); }
 }
 
 function openModal(id){document.getElementById('modal-'+id).classList.add('open')}
@@ -1215,6 +1389,273 @@ function renderAll(){
   setTimeout(initDonut,50);
 }
 
+/* ══════════════ INVERSIONES ══════════════ */
+function getMarketValue(p){ return (p.currentPrice||0)*p.qty; }
+function getCostBasis(p){ return (p.avgCost||0)*p.qty; }
+function getPctChange(p){ return (p.avgCost&&p.currentPrice!=null) ? ((p.currentPrice-p.avgCost)/p.avgCost*100) : null; }
+function getPortfolioTotal(){ return state.investments.reduce((s,p)=>s+getMarketValue(p),0); }
+function invAvg(arr){ return arr.reduce((s,v)=>s+v,0)/arr.length; }
+
+function computeSignals(p, totalValue){
+  const signals=[];
+  const settings = state.investSettings;
+  const pct = getPctChange(p);
+  if(pct!==null){
+    if(pct <= -settings.stopLoss){
+      signals.push({type:'sell',text:`Cayó ${pct.toFixed(1)}% desde tu precio de compra, superando tu stop-loss de -${settings.stopLoss}%.`});
+    } else if(pct >= settings.takeProfit){
+      signals.push({type:'trim',text:`Subió +${pct.toFixed(1)}% desde tu compra, superando tu objetivo de +${settings.takeProfit}%. Considerá tomar ganancias parciales.`});
+    } else {
+      signals.push({type:'hold',text:`${pct>=0?'+':''}${pct.toFixed(1)}% desde tu precio de compra (dentro del rango -${settings.stopLoss}% / +${settings.takeProfit}%).`});
+    }
+  } else {
+    signals.push({type:'warn',text:'Cargá tu precio de compra y actual para evaluar stop-loss / take-profit.'});
+  }
+
+  if(p.sma20!=null && p.sma50!=null && p.currentPrice!=null){
+    if(p.currentPrice>p.sma20 && p.sma20>p.sma50){
+      signals.push({type:'buy',text:'Tendencia alcista: precio por encima de SMA20 y SMA20 por encima de SMA50.'});
+    } else if(p.currentPrice<p.sma20 && p.sma20<p.sma50){
+      signals.push({type:'sell',text:'Tendencia bajista: precio por debajo de SMA20 y SMA20 por debajo de SMA50.'});
+    } else {
+      signals.push({type:'hold',text:'Tendencia mixta: sin señal clara de medias móviles.'});
+    }
+  } else {
+    signals.push({type:'warn',text:'Sin datos de medias móviles. Usá "Tendencia" para calcularlas.'});
+  }
+
+  const weight = totalValue>0 ? getMarketValue(p)/totalValue*100 : 0;
+  if(weight >= settings.concentration){
+    signals.push({type:'trim',text:`Representa el ${weight.toFixed(1)}% de tu cartera, por encima del límite de concentración (${settings.concentration}%). Considerá diversificar.`});
+  } else {
+    signals.push({type:'hold',text:`Pesa ${weight.toFixed(1)}% de tu cartera total.`});
+  }
+
+  if(p.fundamentals){
+    const f = p.fundamentals;
+    const fAvg = (f.valuation+f.quality+f.margin)/3;
+    if(fAvg>=4) signals.push({type:'buy',text:`Buenos fundamentos (${fAvg.toFixed(1)}/5): valuación, calidad de negocio y margen de seguridad favorables.`});
+    else if(fAvg<=2.3) signals.push({type:'sell',text:`Fundamentos débiles (${fAvg.toFixed(1)}/5).`});
+    else signals.push({type:'hold',text:`Fundamentos mixtos (${fAvg.toFixed(1)}/5).`});
+  } else {
+    signals.push({type:'warn',text:'Completá el checklist fundamental para afinar la recomendación.'});
+  }
+
+  return {signals, weight, pct};
+}
+
+function computeRecommendation(p, totalValue){
+  const {signals, weight, pct} = computeSignals(p, totalValue);
+  const settings = state.investSettings;
+  const stopLossHit = pct!==null && pct<=-settings.stopLoss;
+  const takeProfitHit = pct!==null && pct>=settings.takeProfit;
+  const concentrationHit = weight>=settings.concentration;
+  const trendSignal = signals.find(s=>s.text.startsWith('Tendencia'));
+  const fundSignal = signals.find(s=>/fundamentos/i.test(s.text));
+  let secondary=0;
+  if(trendSignal){ if(trendSignal.type==='buy') secondary++; if(trendSignal.type==='sell') secondary--; }
+  if(fundSignal){ if(fundSignal.type==='buy') secondary++; if(fundSignal.type==='sell') secondary--; }
+
+  let label,badge;
+  if(stopLossHit){ label='VENDER'; badge='badge-red'; }
+  else if(concentrationHit){ label='REDUCIR'; badge='badge-amber'; }
+  else if(takeProfitHit){ label='VENDER PARCIAL'; badge='badge-amber'; }
+  else if(secondary>=1){ label='COMPRAR'; badge='badge-green'; }
+  else if(secondary<=-1){ label='VIGILAR'; badge='badge-amber'; }
+  else { label='MANTENER'; badge='badge-blue'; }
+
+  return {label, badge, signals};
+}
+
+function renderInvest(){
+  const total = getPortfolioTotal();
+  const costBasis = state.investments.reduce((s,p)=>s+getCostBasis(p),0);
+  const gain = total-costBasis;
+  const gainPct = costBasis ? (gain/costBasis*100) : 0;
+
+  document.getElementById('inv-hero-total').textContent = fmt(total);
+  document.getElementById('inv-hero-cost').textContent = fmt(costBasis);
+  document.getElementById('inv-hero-gain').textContent = (gain>=0?'+':'')+fmt(gain);
+  document.getElementById('inv-hero-pct').textContent = (gainPct>=0?'+':'')+gainPct.toFixed(1)+'%';
+
+  document.getElementById('inv-metric-count').textContent = state.investments.length;
+  let best=null, worst=null, maxWeight=0;
+  const alerts=[];
+  const posHtml = state.investments.map(p=>{
+    const rec = computeRecommendation(p, total);
+    const pct = getPctChange(p);
+    const weight = total>0 ? getMarketValue(p)/total*100 : 0;
+    if(weight>maxWeight) maxWeight=weight;
+    if(pct!==null){
+      if(best===null||pct>best.pct) best={ticker:p.ticker,pct};
+      if(worst===null||pct<worst.pct) worst={ticker:p.ticker,pct};
+    }
+    rec.signals.filter(s=>s.type==='sell'||s.type==='trim').forEach(s=>alerts.push({ticker:p.ticker,...s}));
+    const icon = {sell:'🔴',trim:'🟠',buy:'🟢',warn:'⚪',hold:'🔵'};
+    const posGain = getMarketValue(p)-getCostBasis(p);
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:14px;font-weight:500">${escapeHtml(p.ticker)} <span style="font-weight:400;color:var(--color-text-secondary);font-size:12px">${p.name?'· '+escapeHtml(p.name):''}</span></div>
+          <div style="font-size:12px;color:var(--color-text-secondary)">${p.qty} u. · Compra prom. ${fmt(p.avgCost)} · Actual ${p.currentPrice!=null?fmt(p.currentPrice):'—'}</div>
+        </div>
+        <span class="badge ${rec.badge}">${rec.label}</span>
+      </div>
+      ${pct!==null?`<div style="font-size:13px;font-weight:500;color:${pct>=0?'#3B6D11':'#A32D2D'};margin-bottom:8px">${pct>=0?'+':''}${pct.toFixed(1)}% · ${posGain>=0?'+':''}${fmt(posGain)}</div>`:''}
+      <div>${rec.signals.map(s=>`<div style="font-size:12px;color:var(--color-text-secondary);padding:3px 0;display:flex;gap:6px"><span>${icon[s.type]||'⚪'}</span><span>${s.text}</span></div>`).join('')}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="refreshTrend(${p.id})">📈 Tendencia</button>
+        <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="openFundamentals(${p.id})">📋 Fundamentos</button>
+        <button class="del-tx-btn" onclick="deletePosition(${p.id})" title="Eliminar">🗑</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty-state">Todavía no cargaste posiciones. Agregá una con el botón ＋.</div>';
+
+  document.getElementById('invest-positions').innerHTML = posHtml;
+  document.getElementById('inv-metric-best').textContent = best ? `${best.ticker} ${best.pct>=0?'+':''}${best.pct.toFixed(1)}%` : '—';
+  document.getElementById('inv-metric-worst').textContent = worst ? `${worst.ticker} ${worst.pct>=0?'+':''}${worst.pct.toFixed(1)}%` : '—';
+  document.getElementById('inv-metric-conc').textContent = maxWeight.toFixed(0)+'%';
+  document.getElementById('invest-alerts').innerHTML = alerts.length
+    ? alerts.slice(0,5).map(a=>`<div class="alert-box ${a.type==='sell'?'alert-danger':'alert-warn'}">${a.type==='sell'?'⚠️':'●'} <strong>${escapeHtml(a.ticker)}</strong>: ${a.text}</div>`).join('')
+    : '<div class="alert-box alert-ok">✅ Sin alertas activas en tu cartera.</div>';
+}
+
+function initInvestChart(){
+  if(charts.investDonut) charts.investDonut.destroy();
+  const palette=['#185FA5','#0F6E56','#993C1D','#854F0B','#3B6D11','#534AB7','#993356','#5F5E5A','#BA7517','#0C447C'];
+  const tickers = state.investments.map(p=>p.ticker);
+  const data = state.investments.map(p=>getMarketValue(p));
+  const colors = tickers.map((_,i)=>palette[i%palette.length]);
+  charts.investDonut = new Chart(document.getElementById('investDonut'),{
+    type:'doughnut',
+    data:{labels:tickers,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}}}
+  });
+  document.getElementById('invest-donut-legend').innerHTML = tickers.map((t,i)=>`<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-text-secondary)"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i]};flex-shrink:0"></span>${escapeHtml(t)}</span>`).join('');
+}
+
+function openAddPosition(){
+  ['pos-ticker','pos-name','pos-sector','pos-qty','pos-avgcost','pos-current'].forEach(id=>document.getElementById(id).value='');
+  openModal('add-position');
+}
+
+function savePosition(){
+  const ticker = document.getElementById('pos-ticker').value.trim().toUpperCase();
+  const name = document.getElementById('pos-name').value.trim();
+  const sector = document.getElementById('pos-sector').value.trim()||'Otros';
+  const qty = parseFloat(document.getElementById('pos-qty').value);
+  const avgCost = parseFloat(document.getElementById('pos-avgcost').value);
+  const currentRaw = document.getElementById('pos-current').value;
+  if(!ticker||!qty||!avgCost) return;
+  state.investments.push({id:state.nextInvestId++,ticker,name,sector,qty,avgCost,currentPrice:currentRaw?parseFloat(currentRaw):avgCost,sma20:null,sma50:null,lastUpdated:null,fundamentals:null});
+  saveState();
+  closeModal('add-position');
+  renderInvest();
+  setTimeout(initInvestChart,50);
+}
+
+function deletePosition(id){
+  state.investments = state.investments.filter(p=>p.id!==id);
+  saveState();
+  renderInvest();
+  setTimeout(initInvestChart,50);
+}
+
+let currentFundId = null;
+function openFundamentals(id){
+  currentFundId = id;
+  const p = state.investments.find(x=>x.id===id);
+  if(!p) return;
+  const f = p.fundamentals||{valuation:3,quality:3,margin:3};
+  document.getElementById('fund-valuation').value = f.valuation;
+  document.getElementById('fund-quality').value = f.quality;
+  document.getElementById('fund-margin').value = f.margin;
+  openModal('fundamentals');
+}
+
+function saveFundamentals(){
+  const p = state.investments.find(x=>x.id===currentFundId);
+  if(!p) return;
+  p.fundamentals = {
+    valuation: parseInt(document.getElementById('fund-valuation').value),
+    quality: parseInt(document.getElementById('fund-quality').value),
+    margin: parseInt(document.getElementById('fund-margin').value)
+  };
+  saveState();
+  closeModal('fundamentals');
+  renderInvest();
+}
+
+async function fetchQuotes(){
+  const settings = state.investSettings;
+  if(!settings.apiKey){ alert('Configurá tu API key de Twelve Data en Ajustes ⚙️ para actualizar precios en vivo.'); return; }
+  const symbols = [...new Set(state.investments.map(p=>p.ticker))];
+  if(!symbols.length) return;
+  try{
+    const res = await fetch(`https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols.join(','))}&apikey=${encodeURIComponent(settings.apiKey)}`);
+    const data = await res.json();
+    const map = symbols.length>1 ? data : {[symbols[0]]:data};
+    state.investments.forEach(p=>{
+      const q = map[p.ticker];
+      if(q && q.close && !q.status){ p.currentPrice = parseFloat(q.close); p.lastUpdated = new Date().toISOString(); }
+    });
+    saveState();
+    renderInvest();
+    setTimeout(initInvestChart,50);
+  }catch(e){
+    alert('No se pudo actualizar los precios. Verificá tu API key o tu conexión.');
+  }
+}
+
+async function refreshTrend(id){
+  const p = state.investments.find(x=>x.id===id);
+  if(!p) return;
+  const settings = state.investSettings;
+  if(!settings.apiKey){ alert('Configurá tu API key de Twelve Data en Ajustes ⚙️ para calcular la tendencia.'); return; }
+  try{
+    const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(p.ticker)}&interval=1day&outputsize=55&apikey=${encodeURIComponent(settings.apiKey)}`);
+    const data = await res.json();
+    if(!data.values) throw new Error('sin datos');
+    const closes = data.values.map(v=>parseFloat(v.close)).reverse();
+    p.sma20 = closes.length>=20 ? invAvg(closes.slice(-20)) : null;
+    p.sma50 = closes.length>=50 ? invAvg(closes.slice(-50)) : null;
+    saveState();
+    renderInvest();
+  }catch(e){
+    alert('No se pudo calcular la tendencia para '+p.ticker+'. Verificá el ticker o tu API key.');
+  }
+}
+
+function openSettings(){
+  const s = state.investSettings;
+  document.getElementById('set-api-key').value = s.apiKey||'';
+  document.getElementById('set-stoploss').value = s.stopLoss;
+  document.getElementById('set-takeprofit').value = s.takeProfit;
+  document.getElementById('set-concentration').value = s.concentration;
+  openModal('settings');
+}
+
+function saveInvestSettings(){
+  const s = state.investSettings;
+  s.apiKey = document.getElementById('set-api-key').value.trim();
+  s.stopLoss = parseFloat(document.getElementById('set-stoploss').value)||15;
+  s.takeProfit = parseFloat(document.getElementById('set-takeprofit').value)||25;
+  s.concentration = parseFloat(document.getElementById('set-concentration').value)||25;
+  saveState();
+  renderInvest();
+  closeModal('settings');
+}
+
+function confirmClearPortfolio(){
+  closeModal('settings');
+  openConfirm('Borrar cartera de inversión','Se eliminarán todas tus posiciones cargadas. Esta acción no se puede deshacer.',()=>{
+    state.investments = [];
+    saveState();
+    renderInvest();
+    setTimeout(initInvestChart,50);
+  });
+}
+
 /* ══════════════ CONFIRMACIÓN GENÉRICA ══════════════ */
 function openConfirm(title,text,onConfirm){
   document.getElementById('confirm-title').textContent = title;
@@ -1301,22 +1742,26 @@ function checkPin(){
 /* ══════════════ DATOS DEMO ══════════════ */
 function confirmClearDemo(){
   closeModal('settings');
-  openConfirm('Borrar datos de demostración','Se eliminarán las transacciones de ejemplo cargadas por defecto. Tus datos ingresados manualmente se conservarán.',()=>{
+  openConfirm('Borrar datos de demostración','Se eliminarán las transacciones y posiciones de ejemplo cargadas por defecto. Tus datos ingresados manualmente se conservarán.',()=>{
     state.transactions = state.transactions.filter(t=>!t.demo);
+    state.investments = state.investments.filter(p=>!p.demo);
     saveState();
     renderAll();
+    renderInvest();
   });
 }
 function confirmClearAll(){
   closeModal('settings');
-  openConfirm('Borrar todos los datos','Se eliminarán TODAS las transacciones, presupuestos y objetivos. Esta acción no se puede deshacer.',()=>{
+  openConfirm('Borrar todos los datos','Se eliminarán TODAS las transacciones, presupuestos, objetivos y la cartera de inversión. Esta acción no se puede deshacer.',()=>{
     localStorage.removeItem(STORAGE_KEY);
     state = createDemoState();
     state.transactions = [];
     state.budgets = [];
     state.goals = [];
+    state.investments = [];
     saveState();
     renderAll();
+    renderInvest();
   });
 }
 
@@ -1332,6 +1777,10 @@ function init(){
   renderAll();
 }
 init();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+}
 </script>
 </body>
 </html>
