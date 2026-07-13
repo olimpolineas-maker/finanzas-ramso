@@ -26,6 +26,23 @@
   --border-radius-md:8px;
   --border-radius-lg:12px;
   --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --color-accent:#185FA5;
+  --color-positive:#3B6D11;
+  --color-negative:#A32D2D;
+  --color-caution:#BA7517;
+  --color-success-bg:#EAF3DE;
+  --color-success-fg:#27500A;
+  --color-success-border:#639922;
+  --color-danger-bg:#FCEBEB;
+  --color-danger-bg-hover:#F7C1C1;
+  --color-danger-fg:#791F1F;
+  --color-danger-border:#E24B4A;
+  --color-warning-bg:#FAEEDA;
+  --color-warning-fg:#633806;
+  --color-warning-border:#EF9F27;
+  --color-info-bg:#E6F1FB;
+  --color-info-fg:#0C447C;
+  --color-info-border:#378ADD;
 }
 @media (prefers-color-scheme:dark){
   :root{
@@ -36,6 +53,23 @@
     --color-text-secondary:#9b9990;
     --color-border-tertiary:rgba(255,255,255,0.1);
     --color-border-secondary:rgba(255,255,255,0.2);
+    --color-accent:#4A93D6;
+    --color-positive:#7CC154;
+    --color-negative:#E58686;
+    --color-caution:#E5A64B;
+    --color-success-bg:rgba(124,193,84,0.15);
+    --color-success-fg:#7CC154;
+    --color-success-border:rgba(124,193,84,0.45);
+    --color-danger-bg:rgba(229,134,134,0.15);
+    --color-danger-bg-hover:rgba(229,134,134,0.3);
+    --color-danger-fg:#E58686;
+    --color-danger-border:rgba(229,134,134,0.45);
+    --color-warning-bg:rgba(229,166,75,0.15);
+    --color-warning-fg:#E5A64B;
+    --color-warning-border:rgba(229,166,75,0.45);
+    --color-info-bg:rgba(74,147,214,0.16);
+    --color-info-fg:#6FB1EC;
+    --color-info-border:rgba(74,147,214,0.5);
   }
 }
 body{font-family:var(--font-sans);background:var(--color-background-tertiary);color:var(--color-text-primary)}
@@ -48,15 +82,15 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;border-radius:var(--border-radius-md)}
 .nav-label{font-size:10px;color:var(--color-text-secondary)}
 .nav-icon{font-size:18px}
-.nav-item.active .nav-label{color:#3266ad;font-weight:500}
+.nav-item.active .nav-label{color:var(--color-accent);font-weight:500}
 .screen{display:none;padding:16px 16px 0}
 .screen.active{display:block}
 .card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:12px}
 .badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
-.badge-green{background:#EAF3DE;color:#27500A}
-.badge-red{background:#FCEBEB;color:#791F1F}
-.badge-amber{background:#FAEEDA;color:#633806}
-.badge-blue{background:#E6F1FB;color:#0C447C}
+.badge-green{background:var(--color-success-bg);color:var(--color-success-fg)}
+.badge-red{background:var(--color-danger-bg);color:var(--color-danger-fg)}
+.badge-amber{background:var(--color-warning-bg);color:var(--color-warning-fg)}
+.badge-blue{background:var(--color-info-bg);color:var(--color-info-fg)}
 .section-title{font-size:13px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.04em}
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .icon-btn-sm{width:24px;height:24px;border-radius:50%;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--color-text-primary)}
@@ -86,9 +120,9 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
 .budget-amounts{font-size:12px;color:var(--color-text-secondary)}
 .budget-pct{font-size:12px;font-weight:500}
 .alert-box{padding:10px 12px;border-radius:var(--border-radius-md);margin-bottom:8px;font-size:13px;border-left:3px solid}
-.alert-warn{background:#FAEEDA;color:#633806;border-color:#EF9F27}
-.alert-danger{background:#FCEBEB;color:#791F1F;border-color:#E24B4A}
-.alert-ok{background:#EAF3DE;color:#27500A;border-color:#639922}
+.alert-warn{background:var(--color-warning-bg);color:var(--color-warning-fg);border-color:var(--color-warning-border)}
+.alert-danger{background:var(--color-danger-bg);color:var(--color-danger-fg);border-color:var(--color-danger-border)}
+.alert-ok{background:var(--color-success-bg);color:var(--color-success-fg);border-color:var(--color-success-border)}
 .goal-item{margin-bottom:16px}
 .goal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .goal-title{font-size:14px;font-weight:500;cursor:pointer}
@@ -100,11 +134,11 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
 .search-box input{flex:1;font-size:14px;padding:8px 12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)}
 .filter-chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .chip{padding:4px 10px;border:0.5px solid var(--color-border-secondary);border-radius:20px;font-size:12px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary)}
-.chip.active{background:#E6F1FB;color:#0C447C;border-color:#378ADD}
+.chip.active{background:var(--color-info-bg);color:var(--color-info-fg);border-color:var(--color-info-border)}
 .insight-card{padding:12px;border-radius:var(--border-radius-md);margin-bottom:10px}
-.insight-card.blue{background:#E6F1FB}
-.insight-card.amber{background:#FAEEDA}
-.insight-card.green{background:#EAF3DE}
+.insight-card.blue{background:var(--color-info-bg)}
+.insight-card.amber{background:var(--color-warning-bg)}
+.insight-card.green{background:var(--color-success-bg)}
 .insight-title{font-size:13px;font-weight:500;margin-bottom:3px}
 .insight-text{font-size:12px;opacity:0.85}
 .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:30;align-items:flex-end;justify-content:center}
@@ -117,8 +151,8 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modal-actions{display:flex;gap:10px;margin-top:16px}
 .btn-cancel{flex:1;padding:10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;font-size:14px;cursor:pointer;color:var(--color-text-primary)}
-.btn-save{flex:2;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer}
-.btn-danger-outline{flex:1;padding:10px;border:0.5px solid #E24B4A;border-radius:var(--border-radius-md);background:transparent;font-size:13px;cursor:pointer;color:#A32D2D}
+.btn-save{flex:2;padding:10px;background:var(--color-accent);color:#fff;border:none;border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer}
+.btn-danger-outline{flex:1;padding:10px;border:0.5px solid var(--color-danger-border);border-radius:var(--border-radius-md);background:transparent;font-size:13px;cursor:pointer;color:var(--color-negative)}
 .tabs{display:flex;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:3px;margin-bottom:16px}
 .tab{flex:1;padding:6px;text-align:center;font-size:13px;cursor:pointer;border-radius:6px;color:var(--color-text-secondary)}
 .tab.active{background:var(--color-background-primary);color:var(--color-text-primary);font-weight:500}
@@ -151,6 +185,9 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
   .metrics-grid{grid-template-columns:repeat(4,1fr)}
   .modal-overlay{align-items:center}
   .modal{border-radius:16px;max-width:480px;max-height:85vh}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  .two-col>.card{margin-bottom:0}
+  .grid-list{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}
 }
 
 /* PIN LOCK */
@@ -161,12 +198,12 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
 .pin-subtitle{font-size:13px;color:var(--color-text-secondary);margin-bottom:32px;text-align:center}
 .pin-dots{display:flex;gap:16px;margin-bottom:32px}
 .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--color-border-secondary);background:transparent;transition:background 0.15s}
-.pin-dot.filled{background:#185FA5;border-color:#185FA5}
+.pin-dot.filled{background:var(--color-accent);border-color:var(--color-accent)}
 .pin-keypad{display:grid;grid-template-columns:repeat(3,72px);gap:12px}
 .pin-key{width:72px;height:72px;border-radius:50%;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);font-size:22px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text-primary);transition:background 0.1s}
 .pin-key:active{background:var(--color-background-secondary)}
 .pin-key.del{font-size:16px;color:var(--color-text-secondary)}
-.pin-error{color:#A32D2D;font-size:13px;margin-top:12px;min-height:18px}
+.pin-error{color:var(--color-negative);font-size:13px;margin-top:12px;min-height:18px}
 
 /* SETTINGS MODAL */
 .settings-group{margin-bottom:18px}
@@ -175,11 +212,11 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
 .settings-row:last-child{border-bottom:none}
 .settings-row-label{font-size:14px}
 .settings-row-sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px}
-.link-btn{background:none;border:none;color:#185FA5;font-size:13px;cursor:pointer;font-weight:500;padding:0}
-.danger-btn{width:100%;padding:12px;background:#FCEBEB;color:#791F1F;border:0.5px solid #F09595;border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;text-align:left}
-.danger-btn:hover{background:#F7C1C1}
-.del-tx-btn{width:28px;height:28px;border-radius:50%;border:none;background:#FCEBEB;color:#A32D2D;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
-.del-tx-btn:hover{background:#F7C1C1}
+.link-btn{background:none;border:none;color:var(--color-accent);font-size:13px;cursor:pointer;font-weight:500;padding:0}
+.danger-btn{width:100%;padding:12px;background:var(--color-danger-bg);color:var(--color-danger-fg);border:0.5px solid var(--color-danger-border);border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;text-align:left}
+.danger-btn:hover{background:var(--color-danger-bg-hover)}
+.del-tx-btn{width:28px;height:28px;border-radius:50%;border:none;background:var(--color-danger-bg);color:var(--color-negative);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+.del-tx-btn:hover{background:var(--color-danger-bg-hover)}
 </style>
 </head>
 <body>
@@ -292,7 +329,7 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
     <p id="confirm-text" style="font-size:14px;color:var(--color-text-secondary);margin-bottom:20px"></p>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('confirm')">Cancelar</button>
-      <button class="btn-save" style="background:#A32D2D" id="confirm-ok-btn">Eliminar</button>
+      <button class="btn-save" style="background:var(--color-negative)" id="confirm-ok-btn">Eliminar</button>
     </div>
   </div>
 </div>
@@ -330,12 +367,12 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
         <div class="metric">
           <div class="m-label">Presupuesto</div>
           <div class="m-value" id="metric-ppto">0%</div>
-          <div class="m-delta" id="metric-alertas" style="color:#BA7517"></div>
+          <div class="m-delta" id="metric-alertas" style="color:var(--color-caution)"></div>
         </div>
         <div class="metric">
           <div class="m-label">Objetivos activos</div>
           <div class="m-value" id="metric-goals">0</div>
-          <div class="m-delta" id="metric-goals-sub" style="color:#185FA5"></div>
+          <div class="m-delta" id="metric-goals-sub" style="color:var(--color-accent)"></div>
         </div>
         <div class="metric">
           <div class="m-label">Días restantes</div>
@@ -344,14 +381,16 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
         </div>
       </div>
       <div id="dashboard-alerts"></div>
-      <div class="card">
-        <div class="section-title" style="margin-bottom:10px">Gastos por categoría (este mes)</div>
-        <div style="position:relative;height:200px"><canvas id="donutChart"></canvas></div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px" id="donut-legend"></div>
-      </div>
-      <div class="card">
-        <div class="section-title" style="margin-bottom:10px">Últimas transacciones</div>
-        <div id="recent-tx"></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:10px">Gastos por categoría (este mes)</div>
+          <div style="position:relative;height:200px"><canvas id="donutChart"></canvas></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px" id="donut-legend"></div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-bottom:10px">Últimas transacciones</div>
+          <div id="recent-tx"></div>
+        </div>
       </div>
       <div class="card">
         <div class="section-title" style="margin-bottom:10px">Inteligencia de gastos</div>
@@ -384,9 +423,9 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
           </div>
         </div>
         <div class="progress-bar" style="height:10px">
-          <div class="progress-fill" id="budget-total-fill" style="width:0%;background:#185FA5"></div>
+          <div class="progress-fill" id="budget-total-fill" style="width:0%;background:var(--color-accent)"></div>
         </div>
-        <div style="text-align:right;font-size:12px;color:#BA7517;margin-top:4px" id="budget-total-pct">0% del presupuesto total</div>
+        <div style="text-align:right;font-size:12px;color:var(--color-caution);margin-top:4px" id="budget-total-pct">0% del presupuesto total</div>
       </div>
       <div id="budget-alerts"></div>
       <div class="card">
@@ -394,7 +433,7 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
           <div class="section-title" style="margin:0">Categorías</div>
           <div class="icon-btn-sm" onclick="openAddBudget()" title="Agregar categoría">＋</div>
         </div>
-        <div id="budget-list"></div>
+        <div id="budget-list" class="grid-list"></div>
       </div>
     </div>
   </div>
@@ -408,33 +447,39 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
         <div class="tab" onclick="switchTab(this,'tab-cats')">Categorías</div>
       </div>
       <div id="tab-trends">
-        <div class="card">
-          <div class="section-title" style="margin-bottom:10px">Gastos mensuales (últimos 6 meses)</div>
-          <div style="position:relative;height:200px"><canvas id="barChart"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="section-title" style="margin-bottom:10px">Flujo de caja</div>
-          <div style="position:relative;height:180px"><canvas id="lineChart"></canvas></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="section-title" style="margin-bottom:10px">Gastos mensuales (últimos 6 meses)</div>
+            <div style="position:relative;height:200px"><canvas id="barChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="section-title" style="margin-bottom:10px">Flujo de caja</div>
+            <div style="position:relative;height:180px"><canvas id="lineChart"></canvas></div>
+          </div>
         </div>
       </div>
       <div id="tab-compare" style="display:none">
-        <div class="card">
-          <div class="section-title" style="margin-bottom:10px">Este mes vs anterior</div>
-          <div style="position:relative;height:220px"><canvas id="compareChart"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="section-title" style="margin-bottom:10px">Variaciones por categoría</div>
-          <div id="compare-list"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="section-title" style="margin-bottom:10px">Este mes vs anterior</div>
+            <div style="position:relative;height:220px"><canvas id="compareChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="section-title" style="margin-bottom:10px">Variaciones por categoría</div>
+            <div id="compare-list"></div>
+          </div>
         </div>
       </div>
       <div id="tab-cats" style="display:none">
-        <div class="card">
-          <div class="section-title" style="margin-bottom:10px">Desglose detallado (este mes)</div>
-          <div id="cats-detail"></div>
-        </div>
-        <div class="card">
-          <div class="section-title" style="margin-bottom:10px">Patrones de gasto</div>
-          <div id="insights-analysis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="section-title" style="margin-bottom:10px">Desglose detallado (este mes)</div>
+            <div id="cats-detail"></div>
+          </div>
+          <div class="card">
+            <div class="section-title" style="margin-bottom:10px">Patrones de gasto</div>
+            <div id="insights-analysis"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -458,7 +503,7 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
           <div class="section-title" style="margin:0">Mis objetivos</div>
           <div class="icon-btn-sm" onclick="openAddGoal()" title="Agregar objetivo">＋</div>
         </div>
-        <div id="goals-list"></div>
+        <div id="goals-list" class="grid-list"></div>
       </div>
     </div>
   </div>
@@ -478,22 +523,24 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);co
       <button class="btn-save" style="width:100%;margin-bottom:12px" onclick="fetchQuotes()">🔄 Actualizar precios (API)</button>
       <div class="metrics-grid">
         <div class="metric"><div class="m-label">Posiciones</div><div class="m-value" id="inv-metric-count">0</div></div>
-        <div class="metric"><div class="m-label">Mejor posición</div><div class="m-value" id="inv-metric-best" style="color:#3B6D11">—</div></div>
-        <div class="metric"><div class="m-label">Peor posición</div><div class="m-value" id="inv-metric-worst" style="color:#A32D2D">—</div></div>
+        <div class="metric"><div class="m-label">Mejor posición</div><div class="m-value" id="inv-metric-best" style="color:var(--color-positive)">—</div></div>
+        <div class="metric"><div class="m-label">Peor posición</div><div class="m-value" id="inv-metric-worst" style="color:var(--color-negative)">—</div></div>
         <div class="metric"><div class="m-label">Concentración máx.</div><div class="m-value" id="inv-metric-conc">0%</div></div>
       </div>
       <div id="invest-alerts"></div>
-      <div class="card">
-        <div class="section-title" style="margin-bottom:10px">Distribución de la cartera</div>
-        <div style="position:relative;height:200px"><canvas id="investDonut"></canvas></div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px" id="invest-donut-legend"></div>
-      </div>
-      <div class="card">
-        <div class="section-header">
-          <div class="section-title" style="margin:0">Posiciones y recomendaciones</div>
-          <div class="icon-btn-sm" onclick="openAddPosition()" title="Agregar posición">＋</div>
+      <div class="two-col">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:10px">Distribución de la cartera</div>
+          <div style="position:relative;height:200px"><canvas id="investDonut"></canvas></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px" id="invest-donut-legend"></div>
         </div>
-        <div id="invest-positions"></div>
+        <div class="card">
+          <div class="section-header">
+            <div class="section-title" style="margin:0">Posiciones y recomendaciones</div>
+            <div class="icon-btn-sm" onclick="openAddPosition()" title="Agregar posición">＋</div>
+          </div>
+          <div id="invest-positions"></div>
+        </div>
       </div>
       <p style="font-size:11px;color:var(--color-text-secondary);text-align:center;padding:12px 8px 24px">Estas señales combinan stop-loss/take-profit, medias móviles, concentración de cartera y tu checklist fundamental. Son orientativas y no constituyen asesoramiento financiero.</p>
     </div>
@@ -974,7 +1021,7 @@ function filterTx(){renderTxList()}
 
 function txRowHtml(t){
   const meta = t.type==='income' ? incomeMeta(t.cat) : catMeta(t.cat);
-  const bg = t.type==='income' ? '#E1F5EE' : (meta.color+'22');
+  const bg = t.type==='income' ? 'var(--color-success-bg)' : (meta.color+'22');
   return `
     <div class="tx-item" onclick="openEditTx(${t.id})">
       <div class="tx-icon" style="background:${bg}">${meta.icon}</div>
@@ -982,7 +1029,7 @@ function txRowHtml(t){
         <div class="tx-name">${escapeHtml(t.desc)}</div>
         <div class="tx-cat">${t.cat} · ${t.date.slice(5).split('-').reverse().join('/')}</div>
       </div>
-      <div class="tx-amount" style="color:${t.amount>0?'#3B6D11':'#A32D2D'};margin-right:6px">${t.amount>0?'+':''}${fmt(t.amount)}</div>
+      <div class="tx-amount" style="color:${t.amount>0?'var(--color-positive)':'var(--color-negative)'};margin-right:6px">${t.amount>0?'+':''}${fmt(t.amount)}</div>
       <button class="del-tx-btn" onclick="deleteTx(${t.id},event)" title="Eliminar">🗑</button>
     </div>`;
 }
@@ -1250,12 +1297,12 @@ function renderDashboardHero(){
 
   const netoEl = document.getElementById('metric-neto');
   netoEl.textContent = (cur.neto>=0?'+':'')+fmt(cur.neto);
-  netoEl.style.color = cur.neto>=0?'#3B6D11':'#A32D2D';
+  netoEl.style.color = cur.neto>=0?'var(--color-positive)':'var(--color-negative)';
   const deltaEl = document.getElementById('metric-neto-delta');
   if(prev.neto!==0){
     const change = Math.round(((cur.neto-prev.neto)/Math.abs(prev.neto))*100);
     deltaEl.textContent = (change>=0?'▲ +':'▼ ')+change+'% vs mes anterior';
-    deltaEl.style.color = change>=0?'#3B6D11':'#A32D2D';
+    deltaEl.style.color = change>=0?'var(--color-positive)':'var(--color-negative)';
   } else {
     deltaEl.textContent = 'vs mes anterior';
     deltaEl.style.color = 'var(--color-text-secondary)';
@@ -1519,7 +1566,7 @@ function renderInvest(){
         </div>
         <span class="badge ${rec.badge}">${rec.label}</span>
       </div>
-      ${pct!==null?`<div style="font-size:13px;font-weight:500;color:${pct>=0?'#3B6D11':'#A32D2D'};margin-bottom:8px">${pct>=0?'+':''}${pct.toFixed(1)}% · ${posGain>=0?'+':''}${fmt(posGain)}</div>`:''}
+      ${pct!==null?`<div style="font-size:13px;font-weight:500;color:${pct>=0?'var(--color-positive)':'var(--color-negative)'};margin-bottom:8px">${pct>=0?'+':''}${pct.toFixed(1)}% · ${posGain>=0?'+':''}${fmt(posGain)}</div>`:''}
       <div>${rec.signals.map(s=>`<div style="font-size:12px;color:var(--color-text-secondary);padding:3px 0;display:flex;gap:6px"><span>${icon[s.type]||'⚪'}</span><span>${s.text}</span></div>`).join('')}</div>
       <div style="display:flex;gap:8px;margin-top:10px">
         <button class="btn-cancel" style="flex:1;padding:6px;font-size:12px" onclick="refreshTrend(${p.id},event)">📈 Tendencia</button>
