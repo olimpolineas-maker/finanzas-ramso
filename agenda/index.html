@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Agenda Laboral</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#1B4965">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Agenda">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --color-background-primary:#ffffff;
+  --color-background-secondary:#f5f5f0;
+  --color-background-tertiary:#eeede8;
+  --color-text-primary:#1a1a18;
+  --color-text-secondary:#6b6a66;
+  --color-border-tertiary:rgba(0,0,0,0.12);
+  --color-border-secondary:rgba(0,0,0,0.25);
+  --border-radius-md:8px;
+  --border-radius-lg:12px;
+  --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --agenda-primary:#1B4965;
+  --agenda-accent:#2E7D6B;
+  --agenda-amber:#FFB03B;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --color-background-primary:#1e1e1c;
+    --color-background-secondary:#2a2a28;
+    --color-background-tertiary:#242422;
+    --color-text-primary:#f0ede6;
+    --color-text-secondary:#9b9990;
+    --color-border-tertiary:rgba(255,255,255,0.1);
+    --color-border-secondary:rgba(255,255,255,0.2);
+  }
+}
+body{font-family:var(--font-sans);background:var(--color-background-tertiary);color:var(--color-text-primary)}
+.app{max-width:420px;margin:0 auto;background:var(--color-background-tertiary);min-height:100vh;padding-bottom:80px}
+.header{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header h1{font-size:16px;font-weight:500}
+.header-actions{display:flex;gap:8px}
+.icon-btn{width:32px;height:32px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:420px;background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);display:flex;padding:8px 0 12px;z-index:20}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;border-radius:var(--border-radius-md)}
+.nav-label{font-size:10px;color:var(--color-text-secondary)}
+.nav-icon{font-size:18px}
+.nav-item.active .nav-label{color:var(--agenda-primary);font-weight:500}
+.screen{display:none;padding:16px 16px 0}
+.screen.active{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.04em}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.icon-btn-sm{width:24px;height:24px;border-radius:50%;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--color-text-primary)}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
+.badge-blue{background:#E6F1FB;color:#0C447C}
+.badge-amber{background:#FAEEDA;color:#633806}
+.alert-box{padding:10px 12px;border-radius:var(--border-radius-md);margin-bottom:8px;font-size:13px;border-left:3px solid}
+.alert-warn{background:#FAEEDA;color:#633806;border-color:#EF9F27}
+.search-box{display:flex;gap:8px;margin-bottom:12px}
+.filter-chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.chip{padding:4px 10px;border:0.5px solid var(--color-border-secondary);border-radius:20px;font-size:12px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary)}
+.chip.active{background:#E6F1FB;color:#0C447C;border-color:#378ADD}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:30;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--color-background-primary);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:500;margin-bottom:16px}
+.form-group{margin-bottom:12px}
+.form-label{font-size:13px;color:var(--color-text-secondary);margin-bottom:4px;display:block}
+.form-input{width:100%;padding:9px 12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;gap:10px;margin-top:16px}
+.btn-cancel{flex:1;padding:10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;font-size:14px;cursor:pointer;color:var(--color-text-primary)}
+.btn-save{flex:2;padding:10px;background:var(--agenda-primary);color:#fff;border:none;border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer}
+.btn-danger-outline{flex:1;padding:10px;border:0.5px solid #E24B4A;border-radius:var(--border-radius-md);background:transparent;font-size:13px;cursor:pointer;color:#A32D2D}
+.empty-state{text-align:center;padding:24px;color:var(--color-text-secondary);font-size:14px}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.switch{position:relative;width:42px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch .slider{position:absolute;inset:0;background:var(--color-border-secondary);border-radius:24px;transition:.15s;cursor:pointer}
+.switch .slider:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+.switch input:checked + .slider{background:var(--agenda-accent)}
+.switch input:checked + .slider:before{transform:translateX(18px)}
+@media(max-width:440px){.nav{width:100%}}
+
+/* DESKTOP / TABLET */
+@media(min-width:768px){
+  body{
+    display:flex;justify-content:center;padding:24px 16px;box-sizing:border-box;min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 10%,rgba(27,73,101,0.10),transparent 45%),
+      radial-gradient(circle at 85% 0%,rgba(46,125,107,0.10),transparent 40%),
+      var(--color-background-tertiary);
+  }
+  .app{
+    max-width:960px;width:100%;min-height:calc(100vh - 48px);padding-bottom:24px;
+    border-radius:var(--border-radius-lg);
+    box-shadow:0 1px 3px rgba(0,0,0,0.08),0 0 0 1px var(--color-border-tertiary);
+    display:flex;flex-direction:column;
+  }
+  .header{order:-2;padding:20px 32px;border-radius:var(--border-radius-lg) var(--border-radius-lg) 0 0}
+  .nav{
+    order:-1;position:static;left:auto;bottom:auto;transform:none;width:100%;max-width:none;
+    border-top:none;border-bottom:0.5px solid var(--color-border-tertiary);
+    justify-content:center;gap:8px;padding:10px 0;
+  }
+  .nav-item{flex:0 1 140px}
+  .screen{padding:24px 32px 32px}
+  .modal-overlay{align-items:center}
+  .modal{border-radius:16px;max-width:480px;max-height:85vh}
+}
+
+/* TOAST */
+.toast-wrap{position:fixed;top:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:388px;z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-left:3px solid var(--agenda-primary);border-radius:var(--border-radius-md);padding:10px 12px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.18);animation:toastIn .2s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* TIMER HERO */
+.timer-hero{background:linear-gradient(135deg,var(--agenda-primary),var(--agenda-accent));border-radius:var(--border-radius-lg);padding:20px;margin-bottom:12px;color:#fff}
+.timer-hero .status{font-size:12px;opacity:.85}
+.timer-hero .clock{font-size:36px;font-weight:600;letter-spacing:0.5px;margin:6px 0;font-variant-numeric:tabular-nums}
+.timer-hero .earn-row{display:flex;gap:20px;min-height:18px}
+.timer-hero .earn-item{font-size:12px;opacity:.85}
+.timer-hero .earn-item span{display:block;font-size:16px;font-weight:600;opacity:1;margin-top:2px}
+.timer-actions{display:flex;gap:10px;margin-top:14px}
+.timer-actions button{flex:1;padding:10px;border-radius:var(--border-radius-md);border:none;font-size:13px;font-weight:500;cursor:pointer}
+.btn-start{background:#fff;color:var(--agenda-primary)}
+.btn-stop{background:rgba(255,255,255,0.18);color:#fff;border:0.5px solid rgba(255,255,255,0.5)}
+
+/* OBJECTIVES */
+.objective-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.objective-row:last-child{border-bottom:none}
+.objective-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--color-border-secondary);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:2px;color:#fff}
+.objective-check.done{background:var(--agenda-accent);border-color:var(--agenda-accent)}
+.objective-body{flex:1;min-width:0}
+.objective-label{font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px}
+.objective-input{width:100%;border:none;background:transparent;font-size:13px;color:var(--color-text-secondary);padding:3px 0;border-bottom:0.5px dashed var(--color-border-tertiary);margin-top:2px}
+.objective-input:focus{outline:none;border-bottom-color:var(--agenda-primary)}
+
+/* TASKS */
+.task-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer}
+.task-item:last-child{border-bottom:none}
+.task-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--color-border-secondary);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
+.task-check.done{background:var(--agenda-accent);border-color:var(--agenda-accent)}
+.task-info{flex:1;min-width:0}
+.task-title{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task-title.done{text-decoration:line-through;color:var(--color-text-secondary)}
+.task-meta{font-size:12px;color:var(--color-text-secondary);display:flex;gap:6px;align-items:center;margin-top:2px}
+.priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.priority-alta{background:#E24B4A}
+.priority-media{background:#EF9F27}
+.priority-baja{background:#5BA3D9}
+
+/* CALENDAR */
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cal-label{font-size:14px;font-weight:500}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal-dow{font-size:10px;color:var(--color-text-secondary);padding-bottom:4px}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:12px;cursor:pointer;position:relative;color:var(--color-text-primary)}
+.cal-day.other-month{color:var(--color-border-secondary);cursor:default}
+.cal-day.today{border:1.5px solid var(--agenda-primary);font-weight:600}
+.cal-day.selected{background:var(--agenda-primary);color:#fff}
+.cal-dot{width:4px;height:4px;border-radius:50%;background:var(--agenda-primary);margin-top:2px}
+.cal-day.selected .cal-dot{background:#fff}
+
+/* DAY CHIPS (turno) */
+.day-chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.day-chip{width:34px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:0.5px solid var(--color-border-secondary);font-size:12px;cursor:pointer;color:var(--color-text-secondary);background:var(--color-background-primary)}
+.day-chip.active{background:#E6F1FB;color:#0C447C;border-color:#378ADD}
+
+/* SESSION HISTORY */
+.tx-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.tx-item:last-child{border-bottom:none}
+.tx-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:14px;font-weight:500}
+.tx-cat{font-size:12px;color:var(--color-text-secondary)}
+.tx-amount{font-size:14px;font-weight:500;white-space:nowrap}
+
+/* SETTINGS */
+.settings-group{margin-bottom:18px}
+.settings-group-title{font-size:12px;font-weight:600;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.settings-row:last-child{border-bottom:none}
+.settings-row-label{font-size:14px}
+.settings-row-sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px}
+.link-btn{background:none;border:none;color:var(--agenda-primary);font-size:13px;cursor:pointer;font-weight:500;padding:0}
+.danger-btn{width:100%;padding:12px;background:#FCEBEB;color:#791F1F;border:0.5px solid #F09595;border-radius:var(--border-radius-md);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;text-align:left}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<div class="app">
+  <div class="header">
+    <div>
+      <div style="font-size:12px;color:var(--color-text-secondary)" id="today-date">Cargando…</div>
+      <h1 id="screen-title">Hoy</h1>
+    </div>
+    <div class="header-actions">
+      <div class="icon-btn" onclick="openAddTask()" title="Agregar tarea">＋</div>
+    </div>
+  </div>
+
+  <!-- HOY -->
+  <div class="screen active" id="screen-today">
+    <div style="padding-top:4px">
+      <div class="alert-box alert-warn" id="rate-warning" style="display:none">
+        ⚠️ Todavía no configuraste el valor de tu hora para este año. Andá a <b>Jornada</b> para cargarlo.
+      </div>
+      <div class="timer-hero" id="timer-hero">
+        <div class="status" id="timer-status">Cargando…</div>
+        <div class="clock" id="timer-clock">00:00:00</div>
+        <div class="earn-row" id="timer-earn"></div>
+        <div class="timer-actions" id="timer-actions"></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:4px">3 objetivos de hoy</div>
+        <div id="objectives-list"></div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title" style="margin:0">Tareas de hoy <span class="badge badge-blue" id="today-task-count">0</span></div>
+          <div class="icon-btn-sm" onclick="openAddTask(todayISO())" title="Agregar tarea">＋</div>
+        </div>
+        <div id="today-tasks"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAREAS -->
+  <div class="screen" id="screen-tasks">
+    <div style="padding-top:4px">
+      <div class="filter-chips" id="task-filters">
+        <div class="chip active" onclick="setTaskFilter('todas',this)">Todas</div>
+        <div class="chip" onclick="setTaskFilter('hoy',this)">Hoy</div>
+        <div class="chip" onclick="setTaskFilter('proximas',this)">Próximas</div>
+        <div class="chip" onclick="setTaskFilter('vencidas',this)">Vencidas</div>
+        <div class="chip" onclick="setTaskFilter('completadas',this)">Completadas</div>
+      </div>
+      <div class="card"><div id="task-list"></div></div>
+    </div>
+  </div>
+
+  <!-- CALENDARIO -->
+  <div class="screen" id="screen-calendar">
+    <div style="padding-top:4px">
+      <div class="card">
+        <div class="cal-header">
+          <div class="icon-btn-sm" onclick="calPrevMonth()">‹</div>
+          <div class="cal-label" id="cal-label">—</div>
+          <div class="icon-btn-sm" onclick="calNextMonth()">›</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title" style="margin:0" id="cal-day-label">—</div>
+          <div class="icon-btn-sm" onclick="openAddTask(selectedDate)" title="Agregar tarea">＋</div>
+        </div>
+        <div id="cal-day-tasks"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JORNADA -->
+  <div class="screen" id="screen-work">
+    <div style="padding-top:4px">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:10px">Valor de la hora (ARS) · <span id="work-rate-year"></span></div>
+        <div class="form-group">
+          <input class="form-input" id="work-rate-input" type="number" placeholder="0">
+        </div>
+        <div class="section-title" style="margin-bottom:10px">Turno</div>
+        <div class="form-group">
+          <label class="form-label">Nombre del turno</label>
+          <input class="form-input" id="turno-name" placeholder="Ej: Turno mañana">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Inicio</label>
+            <input class="form-input" id="turno-start" type="time">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fin</label>
+            <input class="form-input" id="turno-end" type="time">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Días de trabajo</label>
+          <div class="day-chip-row">
+            <div class="day-chip" data-dow="1" onclick="toggleDayChip(this)">L</div>
+            <div class="day-chip" data-dow="2" onclick="toggleDayChip(this)">M</div>
+            <div class="day-chip" data-dow="3" onclick="toggleDayChip(this)">M</div>
+            <div class="day-chip" data-dow="4" onclick="toggleDayChip(this)">J</div>
+            <div class="day-chip" data-dow="5" onclick="toggleDayChip(this)">V</div>
+            <div class="day-chip" data-dow="6" onclick="toggleDayChip(this)">S</div>
+            <div class="day-chip" data-dow="0" onclick="toggleDayChip(this)">D</div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="settings-row-label">Iniciar jornada automáticamente</div>
+            <div class="settings-row-sub">Al llegar la hora de inicio del turno</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="auto-start-toggle"><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="settings-row-label">Finalizar jornada automáticamente</div>
+            <div class="settings-row-sub">Al llegar la hora de fin del turno</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="auto-end-toggle"><span class="slider"></span></label>
+        </div>
+        <button class="btn-save" style="width:100%;margin-top:12px" onclick="saveWorkConfig()">Guardar jornada</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-bottom:10px">Cotización dólar oficial</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:22px;font-weight:600" id="dolar-value">—</div>
+            <div class="settings-row-sub" id="dolar-updated">Sin datos</div>
+          </div>
+          <button class="link-btn" onclick="fetchDolar()">🔄 Actualizar</button>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Ingresar manualmente ($ por USD)</label>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" id="dolar-manual-input" type="number" placeholder="Ej: 1250">
+            <button class="btn-save" style="flex:0 0 auto;padding:9px 14px" onclick="saveManualDolar()">Guardar</button>
+          </div>
+        </div>
+        <div class="insight-text" style="font-size:12px;color:var(--color-text-secondary);margin-top:6px" id="rate-equiv">—</div>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-bottom:10px">Historial de jornadas</div>
+        <div id="session-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AJUSTES -->
+  <div class="screen" id="screen-settings">
+    <div style="padding-top:4px">
+      <div class="settings-group">
+        <div class="settings-group-title">Alertas</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Notificaciones</div>
+            <div class="settings-row-sub" id="notif-status">—</div>
+          </div>
+          <button class="link-btn" id="notif-btn" onclick="requestNotifPermission()">Activar</button>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Recordatorio de inicio del día</label>
+          <input class="form-input" id="morning-time" type="time">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Aviso previo por defecto para tareas (minutos)</label>
+          <input class="form-input" id="default-remind" type="number">
+        </div>
+        <button class="btn-save" style="width:100%" onclick="saveGeneralSettings()">Guardar ajustes</button>
+        <p style="font-size:11px;color:var(--color-text-secondary);margin-top:10px">
+          Las alertas funcionan mientras la app esté abierta o instalada en tu celular. En iPhone, agregá la app a la pantalla de inicio (Compartir → Agregar a inicio) para que las notificaciones lleguen de forma más confiable.
+        </p>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">Datos</div>
+        <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px">Los datos se guardan solo en este dispositivo (localStorage del navegador).</p>
+        <button class="danger-btn" onclick="clearAllData()">⚠️ Borrar todos los datos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-item active" onclick="goTo('today')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Hoy</div>
+    </div>
+    <div class="nav-item" onclick="goTo('tasks')">
+      <div class="nav-icon">✅</div>
+      <div class="nav-label">Tareas</div>
+    </div>
+    <div class="nav-item" onclick="goTo('calendar')">
+      <div class="nav-icon">📅</div>
+      <div class="nav-label">Calendario</div>
+    </div>
+    <div class="nav-item" onclick="goTo('work')">
+      <div class="nav-icon">⏱️</div>
+      <div class="nav-label">Jornada</div>
+    </div>
+    <div class="nav-item" onclick="goTo('settings')">
+      <div class="nav-icon">⚙️</div>
+      <div class="nav-label">Ajustes</div>
+    </div>
+  </nav>
+</div>
+
+<!-- MODAL TAREA -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal">
+    <h2 id="task-modal-title">Nueva tarea</h2>
+    <div class="form-group">
+      <label class="form-label">Título</label>
+      <input class="form-input" id="task-title" placeholder="Ej: Enviar informe semanal">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input class="form-input" id="task-date" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hora (opcional)</label>
+        <input class="form-input" id="task-time" type="time">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prioridad</label>
+        <select class="form-input" id="task-priority">
+          <option value="baja">Baja</option>
+          <option value="media" selected>Media</option>
+          <option value="alta">Alta</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Recordatorio</label>
+        <select class="form-input" id="task-remind">
+          <option value="0">Sin aviso previo</option>
+          <option value="5">5 min antes</option>
+          <option value="10">10 min antes</option>
+          <option value="15" selected>15 min antes</option>
+          <option value="30">30 min antes</option>
+          <option value="60">1 hora antes</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas (opcional)</label>
+      <input class="form-input" id="task-notes" placeholder="Detalles adicionales">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('task')">Cancelar</button>
+      <button class="btn-save" onclick="saveTask()">Guardar</button>
+    </div>
+    <div class="modal-actions" id="task-delete-row" style="display:none">
+      <button class="btn-danger-outline" onclick="deleteTaskFromModal()">Eliminar tarea</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════ CONSTANTES ══════════════ */
+const STORAGE_KEY = 'agenda_ramso_state_v1';
+const MONTHS_FULL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const WD_FULL = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const WD_SHORT = ['dom','lun','mar','mié','jue','vie','sáb'];
+const PRIORITY_LABELS = {alta:'Alta', media:'Media', baja:'Baja'};
+const OBJECTIVE_DEFS = [
+  {key:'productividad', icon:'🚀', label:'Productividad'},
+  {key:'eficiencia', icon:'⚙️', label:'Eficiencia'},
+  {key:'eficacia', icon:'🎯', label:'Eficacia'},
+];
+
+let state, currentScreen = 'today', calState, selectedDate, taskFilter = 'todas', editingTaskId = null, objDebounce = null;
+
+/* ══════════════ HELPERS DE FECHA/FORMATO ══════════════ */
+function pad(n){ return String(n).padStart(2,'0'); }
+function isoFromDate(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function todayISO(){ return isoFromDate(new Date()); }
+function addDaysISO(iso, n){ const d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return isoFromDate(d); }
+function nowHM(){ const d = new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function capitalize(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtMoneyARS(n){ return '$'+Math.round(n||0).toLocaleString('es-AR'); }
+function fmtUSD(n){ return 'US$'+(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function formatDateLabel(iso){
+  if(!iso) return 'Sin fecha';
+  const today = todayISO();
+  if(iso === today) return 'Hoy';
+  if(iso === addDaysISO(today,1)) return 'Mañana';
+  if(iso === addDaysISO(today,-1)) return 'Ayer';
+  const d = new Date(iso+'T00:00:00');
+  return `${WD_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_FULL[d.getMonth()].slice(0,3)}`;
+}
+function formatDateLong(iso){
+  const d = new Date(iso+'T00:00:00');
+  return `${capitalize(WD_FULL[d.getDay()])} ${d.getDate()} de ${MONTHS_FULL[d.getMonth()]}`;
+}
+function hoursBetween(a,b){
+  const [ah,am] = a.split(':').map(Number), [bh,bm] = b.split(':').map(Number);
+  let mins = (bh*60+bm) - (ah*60+am);
+  if(mins < 0) mins += 24*60;
+  return mins/60;
+}
+
+/* ══════════════ ESTADO ══════════════ */
+function defaultState(){
+  const t = todayISO();
+  return {
+    tasks: [
+      {id:1, title:'Reunión de equipo', date:t, time:'10:00', priority:'alta', remind:15, notes:'', done:false, notified:false},
+      {id:2, title:'Enviar informe semanal', date:t, time:'17:30', priority:'media', remind:15, notes:'', done:false, notified:false},
+      {id:3, title:'Planificar sprint', date:addDaysISO(t,1), time:'09:30', priority:'baja', remind:15, notes:'', done:false, notified:false},
+    ],
+    objectives: {},
+    work: {
+      rateByYear: {},
+      turno: {name:'Turno mañana', start:'09:00', end:'17:00', days:[1,2,3,4,5]},
+      autoStart: true,
+      autoEnd: true,
+      _lastAutoStartDate: null,
+      _lastAutoEndDate: null,
+    },
+    sessions: [],
+    settings: {
+      notifEnabled: false,
+      morningReminderTime: '08:00',
+      lastMorningNotifyDate: null,
+      defaultRemind: 15,
+      dolar: {venta:null, compra:null, updated:null, manual:false},
+    },
+    nextTaskId: 4,
+    nextSessionId: 1,
+  };
+}
+function loadState(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return null;
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function initState(){
+  state = loadState() || defaultState();
+  if(!state.work) state.work = defaultState().work;
+  if(!state.work.rateByYear) state.work.rateByYear = {};
+  if(state.work.autoStart == null) state.work.autoStart = true;
+  if(state.work.autoEnd == null) state.work.autoEnd = true;
+  if(!state.settings) state.settings = defaultState().settings;
+  if(!state.settings.dolar) state.settings.dolar = {venta:null,compra:null,updated:null,manual:false};
+  if(state.settings.defaultRemind == null) state.settings.defaultRemind = 15;
+  if(!state.objectives) state.objectives = {};
+  if(!state.sessions) state.sessions = [];
+  if(!state.tasks) state.tasks = [];
+  saveState();
+}
+
+/* ══════════════ NAVEGACIÓN ══════════════ */
+const SCREENS = ['today','tasks','calendar','work','settings'];
+const SCREEN_TITLES = {today:'Hoy', tasks:'Tareas', calendar:'Calendario', work:'Jornada', settings:'Ajustes'};
+function goTo(screen){
+  currentScreen = screen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  document.querySelectorAll('.nav-item')[SCREENS.indexOf(screen)].classList.add('active');
+  document.getElementById('screen-title').textContent = SCREEN_TITLES[screen];
+  if(screen === 'today') renderToday();
+  if(screen === 'tasks') renderTasksScreen();
+  if(screen === 'calendar') renderCalendar();
+  if(screen === 'work') renderWork();
+  if(screen === 'settings') renderSettings();
+}
+function openModal(id){ document.getElementById('modal-'+id).classList.add('open'); }
+function closeModal(id){ document.getElementById('modal-'+id).classList.remove('open'); }
+
+/* ══════════════ TOAST / ALERTAS ══════════════ */
+function toast(msg){
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 5000);
+}
+function notify(title, body){
+  toast(title + (body ? ': '+body : ''));
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{
+      if(navigator.serviceWorker && navigator.serviceWorker.ready){
+        navigator.serviceWorker.ready.then(reg => reg.showNotification(title, {body, icon:'icons/icon-192.png', badge:'icons/icon-192.png', tag:title+'-'+Date.now()}));
+      } else {
+        new Notification(title, {body, icon:'icons/icon-192.png'});
+      }
+    }catch(e){}
+  }
+  if(navigator.vibrate){ try{ navigator.vibrate([120,60,120]); }catch(e){} }
+}
+function requestNotifPermission(){
+  if(!('Notification' in window)){ toast('Este navegador no soporta notificaciones.'); return; }
+  Notification.requestPermission().then(perm => {
+    state.settings.notifEnabled = (perm === 'granted');
+    saveState();
+    renderSettings();
+    toast(perm === 'granted' ? 'Alertas activadas ✅' : 'No se concedió el permiso de notificaciones.');
+  });
+}
+
+/* ══════════════ MOTOR DE ALERTAS (tick) ══════════════ */
+function checkTaskReminders(now){
+  let changed = false;
+  state.tasks.forEach(t => {
+    if(t.done || t.notified || !t.date || !t.time) return;
+    const [hh,mm] = t.time.split(':').map(Number);
+    const due = new Date(t.date+'T00:00:00'); due.setHours(hh,mm,0,0);
+    const remindMin = (t.remind != null) ? t.remind : state.settings.defaultRemind;
+    const triggerAt = new Date(due.getTime() - remindMin*60000);
+    if(now >= triggerAt){
+      if(now.getTime() - due.getTime() < 60*60000){
+        notify('⏰ '+t.title, t.time + (remindMin > 0 ? ' · aviso previo' : ' · ahora'));
+      }
+      t.notified = true; changed = true;
+    }
+  });
+  if(changed) saveState();
+}
+function checkMorning(now){
+  const s = state.settings, today = todayISO();
+  if(s.lastMorningNotifyDate === today) return;
+  const [h,m] = s.morningReminderTime.split(':').map(Number);
+  const t = new Date(now); t.setHours(h,m,0,0);
+  if(now >= t){
+    s.lastMorningNotifyDate = today;
+    saveState();
+    notify('☀️ Buenos días', 'Planificá tus tareas y tus 3 objetivos de hoy: productividad, eficiencia y eficacia.');
+  }
+}
+function activeSession(){ return state.sessions.find(s => s.active); }
+function checkShiftAuto(now){
+  const w = state.work, today = todayISO(), dow = now.getDay();
+  if(w.autoStart && w.turno.days.includes(dow) && w._lastAutoStartDate !== today && !activeSession()){
+    const [sh,sm] = w.turno.start.split(':').map(Number);
+    const shiftStart = new Date(now); shiftStart.setHours(sh,sm,0,0);
+    if(now >= shiftStart){
+      createSession(today, w.turno.start, true);
+      w._lastAutoStartDate = today;
+      saveState();
+      notify('🕒 Jornada iniciada automáticamente', `Turno "${w.turno.name}" (${w.turno.start}–${w.turno.end})`);
+      if(currentScreen === 'today') renderToday();
+    }
+  }
+  const s = activeSession();
+  if(s && w.autoEnd && s.date === today && w._lastAutoEndDate !== today){
+    const [eh,em] = w.turno.end.split(':').map(Number);
+    const shiftEnd = new Date(now); shiftEnd.setHours(eh,em,0,0);
+    if(now >= shiftEnd){
+      closeSession(s, w.turno.end);
+      w._lastAutoEndDate = today;
+      saveState();
+      if(currentScreen === 'today') renderToday();
+      if(currentScreen === 'work') renderWork();
+    }
+  }
+}
+function tick(){
+  const now = new Date();
+  checkTaskReminders(now);
+  checkMorning(now);
+  checkShiftAuto(now);
+}
+
+/* ══════════════ JORNADA / TIMER ══════════════ */
+function currentYearRate(){ return state.work.rateByYear[new Date().getFullYear()] || 0; }
+function createSession(date, startHM, autoStarted){
+  const s = {id: state.nextSessionId++, date, start: startHM, end: null, hourlyRateARS: currentYearRate(), usdRate: state.settings.dolar.venta || null, active: true, autoStarted};
+  state.sessions.push(s);
+  saveState();
+  return s;
+}
+function closeSession(s, endHM){
+  s.end = endHM; s.active = false;
+  const hrs = hoursBetween(s.start, endHM);
+  const earn = hrs * s.hourlyRateARS;
+  const usd = (s.usdRate) ? earn / s.usdRate : null;
+  saveState();
+  notify('✅ Jornada finalizada', `${hrs.toFixed(2)} h trabajadas · ${fmtMoneyARS(earn)}` + (usd != null ? ` (≈ ${fmtUSD(usd)})` : ''));
+}
+function manualStartShift(){
+  if(activeSession()){ toast('Ya hay una jornada en curso.'); return; }
+  createSession(todayISO(), nowHM(), false);
+  state.work._lastAutoStartDate = todayISO();
+  saveState();
+  renderToday(); renderWork();
+}
+function manualEndShift(){
+  const s = activeSession();
+  if(!s){ toast('No hay ninguna jornada en curso.'); return; }
+  closeSession(s, nowHM());
+  state.work._lastAutoEndDate = todayISO();
+  saveState();
+  renderToday(); renderWork();
+}
+function updateTimerClock(){
+  const s = activeSession();
+  const clockEl = document.getElementById('timer-clock');
+  const earnEl = document.getElementById('timer-earn');
+  if(!s){ clockEl.textContent = '00:00:00'; earnEl.innerHTML = ''; return; }
+  const [sh,sm] = s.start.split(':').map(Number);
+  const startDate = new Date(); startDate.setHours(sh,sm,0,0);
+  let diffMs = Date.now() - startDate.getTime();
+  if(diffMs < 0) diffMs = 0;
+  const totalSec = Math.floor(diffMs/1000);
+  const hh = pad(Math.floor(totalSec/3600)), mm = pad(Math.floor((totalSec%3600)/60)), ss = pad(totalSec%60);
+  clockEl.textContent = `${hh}:${mm}:${ss}`;
+  const hrs = diffMs/3600000;
+  const earn = hrs * s.hourlyRateARS;
+  const dolar = state.settings.dolar.venta;
+  earnEl.innerHTML = `<div class="earn-item">Ganado hoy<span>${fmtMoneyARS(earn)}</span></div>` +
+    (dolar ? `<div class="earn-item">Equivalente<span>${fmtUSD(earn/dolar)}</span></div>` : '');
+}
+setInterval(() => { if(currentScreen === 'today') updateTimerClock(); }, 1000);
+function renderTimerHero(){
+  const s = activeSession();
+  const statusEl = document.getElementById('timer-status');
+  const actionsEl = document.getElementById('timer-actions');
+  if(s){
+    statusEl.textContent = `Jornada en curso · ${escapeHtml(state.work.turno.name)}` + (s.autoStarted ? ' · iniciada automáticamente' : '');
+    actionsEl.innerHTML = `<button class="btn-stop" onclick="manualEndShift()">Finalizar jornada</button>`;
+  } else {
+    const rate = currentYearRate();
+    statusEl.textContent = rate
+      ? `Turno: ${state.work.turno.name} (${state.work.turno.start}–${state.work.turno.end})`
+      : 'Configurá tu jornada en la pestaña "Jornada"';
+    actionsEl.innerHTML = `<button class="btn-start" onclick="manualStartShift()">Iniciar jornada</button>`;
+  }
+  updateTimerClock();
+}
+function renderSessionHistory(){
+  const list = [...state.sessions].sort((a,b) => (b.date+(b.start||'')).localeCompare(a.date+(a.start||''))).slice(0,15);
+  const el = document.getElementById('session-history');
+  if(!list.length){ el.innerHTML = '<div class="empty-state">Todavía no hay jornadas registradas.</div>'; return; }
+  el.innerHTML = list.map(s => {
+    const hrs = s.end ? hoursBetween(s.start, s.end) : null;
+    const earn = (hrs != null) ? hrs*s.hourlyRateARS : null;
+    const usd = (earn != null && s.usdRate) ? earn/s.usdRate : null;
+    return `<div class="tx-item">
+      <div class="tx-icon" style="background:${s.active ? '#EAF3DE' : '#E6F1FB'}">${s.active ? '🟢' : '🕒'}</div>
+      <div class="tx-info">
+        <div class="tx-name">${formatDateLabel(s.date)}${s.autoStarted ? ' · auto' : ''}</div>
+        <div class="tx-cat">${s.start}${s.end ? ' - '+s.end : ' - en curso'}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="tx-amount">${earn != null ? fmtMoneyARS(earn) : '—'}</div>
+        ${usd != null ? `<div style="font-size:11px;color:var(--color-text-secondary)">${fmtUSD(usd)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleDayChip(el){ el.classList.toggle('active'); }
+function saveWorkConfig(){
+  const y = new Date().getFullYear();
+  const rate = parseFloat(document.getElementById('work-rate-input').value) || 0;
+  state.work.rateByYear[y] = rate;
+  state.work.turno.name = document.getElementById('turno-name').value.trim() || 'Turno';
+  state.work.turno.start = document.getElementById('turno-start').value || '09:00';
+  state.work.turno.end = document.getElementById('turno-end').value || '17:00';
+  state.work.turno.days = [...document.querySelectorAll('.day-chip.active')].map(c => Number(c.dataset.dow));
+  state.work.autoStart = document.getElementById('auto-start-toggle').checked;
+  state.work.autoEnd = document.getElementById('auto-end-toggle').checked;
+  saveState();
+  renderWork(); renderToday();
+  toast('Configuración guardada ✅');
+}
+async function fetchDolar(){
+  toast('Actualizando cotización…');
+  try{
+    const res = await fetch('https://dolarapi.com/v1/dolares/oficial');
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    state.settings.dolar = {venta: data.venta, compra: data.compra, updated: new Date().toISOString(), manual: false};
+    saveState(); renderWork();
+    toast('Cotización actualizada ✅');
+  }catch(e){
+    toast('No se pudo obtener la cotización. Podés ingresarla manualmente.');
+  }
+}
+function saveManualDolar(){
+  const v = parseFloat(document.getElementById('dolar-manual-input').value);
+  if(!v || v <= 0){ toast('Ingresá un valor válido.'); return; }
+  state.settings.dolar = {venta: v, compra: null, updated: new Date().toISOString(), manual: true};
+  saveState(); renderWork();
+  document.getElementById('dolar-manual-input').value = '';
+  toast('Cotización guardada.');
+}
+function renderWork(){
+  const w = state.work, y = new Date().getFullYear();
+  document.getElementById('work-rate-year').textContent = y;
+  document.getElementById('work-rate-input').value = w.rateByYear[y] || '';
+  document.getElementById('turno-name').value = w.turno.name;
+  document.getElementById('turno-start').value = w.turno.start;
+  document.getElementById('turno-end').value = w.turno.end;
+  document.querySelectorAll('.day-chip').forEach(ch => {
+    ch.classList.toggle('active', w.turno.days.includes(Number(ch.dataset.dow)));
+  });
+  document.getElementById('auto-start-toggle').checked = w.autoStart;
+  document.getElementById('auto-end-toggle').checked = w.autoEnd;
+
+  const dolar = state.settings.dolar;
+  document.getElementById('dolar-value').textContent = dolar.venta ? fmtMoneyARS(dolar.venta) : '—';
+  document.getElementById('dolar-updated').textContent = dolar.updated
+    ? (dolar.manual ? 'Manual · ' : '') + new Date(dolar.updated).toLocaleString('es-AR')
+    : 'Sin datos';
+
+  const rate = w.rateByYear[y] || 0;
+  const equivEl = document.getElementById('rate-equiv');
+  if(rate > 0 && dolar.venta) equivEl.textContent = `Tu hora equivale a ${fmtUSD(rate/dolar.venta)} (dólar oficial ${fmtMoneyARS(dolar.venta)})`;
+  else if(rate > 0) equivEl.textContent = 'Actualizá la cotización del dólar para ver la equivalencia.';
+  else equivEl.textContent = 'Configurá el valor de tu hora para ver la equivalencia.';
+
+  renderSessionHistory();
+}
+
+/* ══════════════ OBJETIVOS DIARIOS ══════════════ */
+function ensureObjectives(dateIso){
+  if(!state.objectives[dateIso]) state.objectives[dateIso] = {};
+  OBJECTIVE_DEFS.forEach(o => { if(!state.objectives[dateIso][o.key]) state.objectives[dateIso][o.key] = {text:'', done:false}; });
+  return state.objectives[dateIso];
+}
+function renderObjectives(){
+  const dateIso = todayISO();
+  const obj = ensureObjectives(dateIso);
+  document.getElementById('objectives-list').innerHTML = OBJECTIVE_DEFS.map(o => {
+    const val = obj[o.key];
+    return `<div class="objective-row">
+      <div class="objective-check ${val.done ? 'done' : ''}" onclick="toggleObjective('${o.key}')">${val.done ? '✓' : ''}</div>
+      <div class="objective-body">
+        <div class="objective-label">${o.icon} ${o.label}</div>
+        <input class="objective-input" placeholder="¿Qué vas a lograr hoy en ${o.label.toLowerCase()}?" value="${escapeHtml(val.text)}" oninput="updateObjectiveText('${o.key}',this.value)">
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleObjective(key){
+  const obj = ensureObjectives(todayISO());
+  obj[key].done = !obj[key].done;
+  saveState(); renderObjectives();
+}
+function updateObjectiveText(key, val){
+  const obj = ensureObjectives(todayISO());
+  obj[key].text = val;
+  clearTimeout(objDebounce);
+  objDebounce = setTimeout(saveState, 400);
+}
+
+/* ══════════════ TAREAS ══════════════ */
+function taskItemHTML(t){
+  return `<div class="task-item" onclick="openEditTask(${t.id})">
+    <div class="task-check ${t.done ? 'done' : ''}" onclick="event.stopPropagation();toggleTaskDone(${t.id})">${t.done ? '✓' : ''}</div>
+    <div class="task-info">
+      <div class="task-title ${t.done ? 'done' : ''}">${escapeHtml(t.title)}</div>
+      <div class="task-meta"><span class="priority-dot priority-${t.priority}"></span>${PRIORITY_LABELS[t.priority]}${t.time ? ' · '+t.time : ' · sin hora'}</div>
+    </div>
+  </div>`;
+}
+function taskListHTML(list){
+  if(!list.length) return '<div class="empty-state">Sin tareas.</div>';
+  return [...list].sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99')).map(taskItemHTML).join('');
+}
+function renderTaskGroups(containerId, list){
+  const el = document.getElementById(containerId);
+  if(!list.length){ el.innerHTML = '<div class="empty-state">No hay tareas para mostrar.</div>'; return; }
+  const groups = {};
+  list.forEach(t => { const k = t.date || 'sin-fecha'; (groups[k] = groups[k] || []).push(t); });
+  const dates = Object.keys(groups).sort();
+  el.innerHTML = dates.map(dt => `
+    <div class="section-title" style="margin:14px 0 6px">${dt === 'sin-fecha' ? 'Sin fecha' : formatDateLabel(dt)}</div>
+    ${taskListHTML(groups[dt])}
+  `).join('');
+}
+function setTaskFilter(f, el){
+  taskFilter = f;
+  document.querySelectorAll('#task-filters .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTasksScreen();
+}
+function renderTasksScreen(){
+  const today = todayISO(), now = nowHM();
+  let list = [...state.tasks];
+  if(taskFilter === 'hoy') list = list.filter(t => t.date === today);
+  else if(taskFilter === 'proximas') list = list.filter(t => !t.done && (t.date > today || (t.date === today && (!t.time || t.time >= now))));
+  else if(taskFilter === 'vencidas') list = list.filter(t => !t.done && (t.date < today || (t.date === today && t.time && t.time < now)));
+  else if(taskFilter === 'completadas') list = list.filter(t => t.done);
+  list.sort((a,b) => (a.date+(a.time||'99:99')).localeCompare(b.date+(b.time||'99:99')));
+  renderTaskGroups('task-list', list);
+}
+function openAddTask(dateIso){
+  editingTaskId = null;
+  document.getElementById('task-modal-title').textContent = 'Nueva tarea';
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-date').value = dateIso || (currentScreen === 'calendar' ? selectedDate : todayISO());
+  document.getElementById('task-time').value = '';
+  document.getElementById('task-priority').value = 'media';
+  document.getElementById('task-remind').value = String(state.settings.defaultRemind);
+  document.getElementById('task-notes').value = '';
+  document.getElementById('task-delete-row').style.display = 'none';
+  openModal('task');
+}
+function openEditTask(id){
+  const t = state.tasks.find(x => x.id === id);
+  if(!t) return;
+  editingTaskId = id;
+  document.getElementById('task-modal-title').textContent = 'Editar tarea';
+  document.getElementById('task-title').value = t.title;
+  document.getElementById('task-date').value = t.date;
+  document.getElementById('task-time').value = t.time || '';
+  document.getElementById('task-priority').value = t.priority;
+  document.getElementById('task-remind').value = String(t.remind != null ? t.remind : state.settings.defaultRemind);
+  document.getElementById('task-notes').value = t.notes || '';
+  document.getElementById('task-delete-row').style.display = 'flex';
+  openModal('task');
+}
+function saveTask(){
+  const title = document.getElementById('task-title').value.trim();
+  if(!title){ toast('Ingresá un título.'); return; }
+  const date = document.getElementById('task-date').value || todayISO();
+  const time = document.getElementById('task-time').value || null;
+  const priority = document.getElementById('task-priority').value;
+  const remind = Number(document.getElementById('task-remind').value);
+  const notes = document.getElementById('task-notes').value.trim();
+  if(editingTaskId){
+    const t = state.tasks.find(x => x.id === editingTaskId);
+    Object.assign(t, {title, date, time, priority, remind, notes, notified:false});
+  } else {
+    state.tasks.push({id: state.nextTaskId++, title, date, time, priority, remind, notes, done:false, notified:false});
+  }
+  saveState();
+  closeModal('task');
+  renderAll();
+}
+function toggleTaskDone(id){
+  const t = state.tasks.find(x => x.id === id);
+  if(!t) return;
+  t.done = !t.done;
+  saveState(); renderAll();
+}
+function deleteTaskFromModal(){
+  if(!editingTaskId) return;
+  if(!confirm('¿Eliminar esta tarea?')) return;
+  state.tasks = state.tasks.filter(t => t.id !== editingTaskId);
+  saveState();
+  closeModal('task');
+  renderAll();
+}
+function renderAll(){
+  renderToday();
+  if(currentScreen === 'tasks') renderTasksScreen();
+  if(currentScreen === 'calendar') renderCalendar();
+}
+
+/* ══════════════ CALENDARIO ══════════════ */
+function calPrevMonth(){ calState.month--; if(calState.month < 0){ calState.month = 11; calState.year--; } renderCalendar(); }
+function calNextMonth(){ calState.month++; if(calState.month > 11){ calState.month = 0; calState.year++; } renderCalendar(); }
+function selectCalDay(iso){ selectedDate = iso; renderCalendar(); }
+function renderCalendar(){
+  const {year, month} = calState;
+  document.getElementById('cal-label').textContent = capitalize(MONTHS_FULL[month]) + ' ' + year;
+  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const todayIso = todayISO();
+  const tasksByDate = {};
+  state.tasks.forEach(t => { if(t.date) (tasksByDate[t.date] = tasksByDate[t.date] || []).push(t); });
+
+  let cells = [];
+  for(let i=0;i<firstDow;i++) cells.push({dnum: daysInPrevMonth - firstDow + 1 + i, iso:null, other:true});
+  for(let d=1; d<=daysInMonth; d++) cells.push({dnum:d, iso:`${year}-${pad(month+1)}-${pad(d)}`, other:false});
+  let nextNum = 1;
+  while(cells.length % 7 !== 0) cells.push({dnum:nextNum++, iso:null, other:true});
+
+  const dowRow = ['L','M','M','J','V','S','D'].map(d => `<div class="cal-dow">${d}</div>`).join('');
+  const cellsHtml = cells.map(c => {
+    const classes = ['cal-day'];
+    if(c.other) classes.push('other-month');
+    if(c.iso === todayIso) classes.push('today');
+    if(c.iso && c.iso === selectedDate) classes.push('selected');
+    const hasTasks = c.iso && tasksByDate[c.iso] && tasksByDate[c.iso].length;
+    return `<div class="${classes.join(' ')}" ${c.iso ? `onclick="selectCalDay('${c.iso}')"` : ''}>
+      <span>${c.dnum}</span>${hasTasks ? '<div class="cal-dot"></div>' : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('cal-grid').innerHTML = dowRow + cellsHtml;
+  renderCalDayList();
+}
+function renderCalDayList(){
+  document.getElementById('cal-day-label').textContent = formatDateLabel(selectedDate) + ' · ' + formatDateLong(selectedDate);
+  const list = state.tasks.filter(t => t.date === selectedDate);
+  document.getElementById('cal-day-tasks').innerHTML = taskListHTML(list);
+}
+
+/* ══════════════ HOY ══════════════ */
+function renderToday(){
+  document.getElementById('today-date').textContent = capitalize(formatDateLong(todayISO()));
+  renderTimerHero();
+  renderObjectives();
+  const todays = state.tasks.filter(t => t.date === todayISO());
+  document.getElementById('today-task-count').textContent = todays.filter(t => !t.done).length;
+  document.getElementById('today-tasks').innerHTML = taskListHTML(todays);
+  const y = new Date().getFullYear();
+  document.getElementById('rate-warning').style.display = state.work.rateByYear[y] ? 'none' : 'block';
+}
+
+/* ══════════════ AJUSTES ══════════════ */
+function renderSettings(){
+  const s = state.settings;
+  const perm = ('Notification' in window) ? Notification.permission : 'no-soportado';
+  const label = perm === 'granted' ? 'Activadas' : perm === 'denied' ? 'Bloqueadas por el navegador' : perm === 'no-soportado' ? 'No soportadas en este navegador' : 'No activadas';
+  document.getElementById('notif-status').textContent = label;
+  document.getElementById('notif-btn').style.display = (perm === 'granted' || perm === 'no-soportado') ? 'none' : 'inline-block';
+  document.getElementById('morning-time').value = s.morningReminderTime;
+  document.getElementById('default-remind').value = s.defaultRemind;
+}
+function saveGeneralSettings(){
+  state.settings.morningReminderTime = document.getElementById('morning-time').value || '08:00';
+  state.settings.defaultRemind = Number(document.getElementById('default-remind').value) || 0;
+  state.settings.lastMorningNotifyDate = null;
+  saveState();
+  toast('Ajustes guardados ✅');
+}
+function clearAllData(){
+  if(!confirm('¿Borrar todos los datos de la agenda? Esta acción no se puede deshacer.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+/* ══════════════ INIT ══════════════ */
+function init(){
+  initState();
+  calState = {year: new Date().getFullYear(), month: new Date().getMonth()};
+  selectedDate = todayISO();
+  goTo('today');
+  tick();
+  setInterval(tick, 20000);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) tick(); });
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(() => {}); }
+}
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

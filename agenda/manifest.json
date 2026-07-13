@@ -1,0 +1,17 @@
+{
+  "name": "Agenda Laboral",
+  "short_name": "Agenda",
+  "description": "Tareas diarias, calendario, jornada laboral con cotización del dólar oficial y objetivos, con alertas.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f2130",
+  "theme_color": "#1B4965",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
